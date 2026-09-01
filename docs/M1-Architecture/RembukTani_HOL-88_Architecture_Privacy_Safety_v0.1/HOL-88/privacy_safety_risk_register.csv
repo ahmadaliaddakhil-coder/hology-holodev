@@ -1,0 +1,15 @@
+risk_id,risk,likelihood,impact,consequence,mitigation,owner,status
+R88-01,Source/provenance spoofing,Medium,High,Wrong evidence appears trusted,"HOL-86 provenance, validation, source display",Full-stack + AI/Data,Open for implementation review
+R88-02,MOCK data mistaken as live,Medium,High,Unsafe/misleading demo,"Persistent MOCK marker, environment separation",All,Guardrail defined
+R88-03,Stale evidence silently used,Medium,High,Outdated assessment,"HOL-87 freshness evaluation, assessment invalidation",AI/Data + Full-stack,Guardrail defined
+R88-04,Reasoning treated as final command,Medium,High,Automation bias / unsafe reliance,"Human authority boundary, limitations, no prescription",PM/UX + AI/Data,Guardrail defined
+R88-05,Reasoner failure fabricates result,Low,High,False assessment,"assessment_unavailable + retry/fallback, no fabricated output",AI/Data + Full-stack,Guardrail defined
+R88-06,Decision Record silent overwrite,Low,High,Audit/history lost,Revision/supersedes semantics,Full-stack,Needs implementation
+R88-07,Duplicate final decision save,Medium,Medium,Duplicate authoritative records,Idempotent-save mechanism recommended,Full-stack,TBD implementation
+R88-08,Sensitive data in logs,Medium,High,Privacy leak,"Metadata-first logs, redaction, no secrets",Full-stack,TBD implementation
+R88-09,Secret/API credential leak,Low,High,System compromise,"Secret boundary, no repo/log/domain DB",Full-stack,TBD implementation
+R88-10,External API outage,Medium,Medium,Evidence unavailable,Demo fixture only in demo; cached-real/abstain in real use,Full-stack + AI/Data,Guardrail defined
+R88-11,Reviewer unavailable becomes blocker,Medium,Medium,Core flow dead-end,Optional review/skip/unavailable state,PM/UX + Full-stack,Guardrail defined
+R88-12,Unauthorized role action,Medium,High,Wrong review/decision,Logical access matrix; auth/RBAC before real pilot,Full-stack,Blocking before real pilot
+R88-13,Real personal data collected before policy,Medium,High,Governance/privacy gap,No persistent real-data pilot before policy,PM + Full-stack,Blocking before real pilot
+R88-14,Assessment outdated before decision,Medium,High,Decision based on stale inference,Invalidate/recalculate assessment when evidence changes,Full-stack + AI/Data,Needs implementation

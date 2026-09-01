@@ -1,0 +1,37 @@
+{
+  "evidence_id": "EVD-FLD-001",
+  "evidence_type": "field_observation",
+  "source": {
+    "category": "group_observation",
+    "name": "Demo Farmer Group"
+  },
+  "provenance": {
+    "collection_mode": "fixture",
+    "is_mock": true
+  },
+  "location": {
+    "province": "Jawa Timur",
+    "regency": "Kabupaten Malang",
+    "district": "Kepanjen",
+    "hamparan_name": "Blok Tirto A3"
+  },
+  "observed_at": "2026-08-30T07:30:00Z",
+  "valid_until": "2026-08-31T07:30:00Z",
+  "quality": {
+    "level": "high",
+    "basis": "direct_field_observation_fixture"
+  },
+  "payload": {
+    "crop": "rice",
+    "variety": "Inpari 32",
+    "growth_stage": "flowering",
+    "planting_date": "2026-06-15",
+    "water_status": "critical_low",
+    "irrigation_status": "dry",
+    "field_observation": {
+      "soil_crack": "shallow",
+      "irrigation_flow_percentage": 20
+    },
+    "notes": "Demo observation"
+  }
+}

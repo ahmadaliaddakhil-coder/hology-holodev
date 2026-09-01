@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RembukTani — HOL-84 Participant Build · Participant P3 — Normal path / review-choice probe</title>
+<style>
+  :root {
+    --bg: #f2f2f2;
+    --surface: #ffffff;
+    --ink: #111111;
+    --muted: #666666;
+    --line: #b7b7b7;
+    --soft: #e8e8e8;
+    --dark: #252525;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  button, input, textarea, select { font: inherit; }
+  button, select, input, textarea { border-radius: 0; }
+  .prototype-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(250px, 320px) 1fr;
+  }
+  .tester-panel {
+    border-right: 2px solid var(--line);
+    padding: 20px;
+    background: #e5e5e5;
+  }
+  .tester-panel h1 {
+    font-size: 18px;
+    margin: 0 0 6px;
+  }
+  .tester-panel p {
+    margin: 0 0 18px;
+    color: #444;
+    font-size: 13px;
+  }
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 14px 0 6px;
+  }
+  select, .tester-panel button {
+    width: 100%;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #777;
+  }
+  .tester-panel .helper {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px dashed #777;
+    background: #efefef;
+    font-size: 12px;
+  }
+  .state-log {
+    margin-top: 18px;
+    font-size: 12px;
+  }
+  .state-log code {
+    display: block;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #aaa;
+    white-space: pre-wrap;
+  }
+
+  .canvas {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .phone {
+    width: 390px;
+    min-height: 760px;
+    background: var(--surface);
+    border: 2px solid #444;
+    position: relative;
+    box-shadow: 8px 8px 0 #d4d4d4;
+  }
+  .topbar {
+    border-bottom: 2px solid #444;
+    padding: 12px 14px;
+    background: #fafafa;
+  }
+  .brand {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .demo-badge {
+    display: inline-block;
+    border: 1px solid #333;
+    padding: 3px 6px;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .progress {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .progress span {
+    flex: 1;
+    height: 5px;
+    background: #ddd;
+    border: 1px solid #aaa;
+  }
+  .progress span.active { background: #555; }
+
+  .screen {
+    padding: 18px 16px 100px;
+  }
+  .screen h2 {
+    font-size: 22px;
+    margin: 0 0 6px;
+  }
+  .screen .lead {
+    color: #444;
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 22px 0 8px;
+    color: #444;
+  }
+  .card {
+    border: 1px solid #777;
+    padding: 12px;
+    margin: 9px 0;
+    background: #fff;
+  }
+  .card.soft { background: #f3f3f3; }
+  .card.dashed { border-style: dashed; }
+  .card h3 {
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 5px 8px;
+    font-size: 13px;
+  }
+  .kv dt { color: #555; }
+  .kv dd { margin: 0; font-weight: 700; }
+  .status {
+    display: inline-block;
+    border: 1px solid #555;
+    padding: 3px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .status.fill { background: #333; color: #fff; }
+  .status.light { background: #eee; }
+  .warning {
+    border: 2px solid #333;
+    background: #f0f0f0;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .warning strong { display: block; margin-bottom: 4px; }
+  .plain-list {
+    padding-left: 20px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .plain-list li { margin: 6px 0; }
+  .evidence-meta {
+    color: #555;
+    font-size: 11px;
+    border-top: 1px dashed #aaa;
+    margin-top: 9px;
+    padding-top: 7px;
+  }
+  .option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px;
+    background: #fff;
+    border: 2px solid #777;
+    margin: 9px 0;
+    cursor: pointer;
+  }
+  .option.selected {
+    border: 3px solid #222;
+    background: #ededed;
+  }
+  .option strong { display: block; margin-bottom: 4px; }
+  .option small { color: #555; display: block; margin-top: 5px; }
+  .input-group { margin: 12px 0; }
+  .input-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+  .input-group input, .input-group textarea, .input-group select {
+    width: 100%;
+    border: 1px solid #777;
+    padding: 10px;
+    background: #fff;
+  }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .footer-actions {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 12px;
+    border-top: 2px solid #444;
+    background: #fafafa;
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    border: 2px solid #333;
+    padding: 10px 12px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    font-weight: 700;
+    flex: 1;
+  }
+  .btn.primary {
+    background: #333;
+    color: #fff;
+  }
+  .btn.linklike {
+    border-style: dashed;
+    background: #fff;
+  }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .mini {
+    font-size: 11px;
+    color: #555;
+  }
+  .human-boundary {
+    border: 3px double #222;
+    padding: 12px;
+    margin: 12px 0;
+  }
+  .human-boundary strong {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .review-box {
+    border-left: 5px solid #444;
+    padding: 10px 12px;
+    background: #f2f2f2;
+    margin: 12px 0;
+  }
+  .hidden { display: none !important; }
+
+  @media (max-width: 850px) {
+    .prototype-shell { grid-template-columns: 1fr; }
+    .tester-panel { border-right: 0; border-bottom: 2px solid var(--line); }
+    .canvas { padding: 16px 8px 40px; }
+    .phone { width: min(390px, 100%); box-shadow: none; }
+  }
+
+  /* HOL-84 participant mode: moderator/tester controls are intentionally hidden. */
+  .tester-panel { display: none !important; }
+  .prototype-shell { grid-template-columns: 1fr !important; }
+  .canvas { min-height: 100vh; padding-top: 18px; }
+</style>
+</head>
+<!-- HOL-84 participant build: Participant P3 — Normal path / review-choice probe; assigned scenario=normal. Do not show moderator notes to participant. -->
+<body>
+<div class="prototype-shell">
+  <aside class="tester-panel">
+    <h1>HOL-83 · Low-Fi Tester</h1>
+    <p>Panel ini hanya untuk pengujian prototype, bukan bagian UI produksi.</p>
+
+    <label class="field-label" for="scenario">State yang diuji</label>
+    <select id="scenario">
+      <option value="normal" selected>Normal — DEMO-WATER-01</option>
+      <option value="missing">Missing local evidence</option>
+      <option value="stale">Stale local evidence</option>
+      <option value="conflict">Conflicting evidence</option>
+      <option value="engine-error">Reasoning unavailable</option>
+    </select>
+
+    <label class="field-label" for="startAt">Mulai dari</label>
+    <select id="startAt">
+      <option value="decision">Decision Moment</option>
+      <option value="field">Field Pulse</option>
+      <option value="assessment">Evidence & Assessment</option>
+      <option value="options">Alternatives</option>
+      <option value="record">Decision Record</option>
+    </select>
+
+    <button id="resetBtn">Reset Prototype</button>
+
+    <div class="helper">
+      <strong>Tujuan test</strong><br>
+      Apakah user memahami apa yang sedang diputuskan, evidence apa yang dipakai,
+      kenapa assessment muncul, apa yang belum diketahui, dan bahwa keputusan akhir tetap manusia?
+    </div>
+
+    <div class="state-log">
+      <strong>Current prototype state</strong>
+      <code id="stateLog"></code>
+    </div>
+  </aside>
+
+  <main class="canvas">
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">RembukTani</div>
+        <span class="demo-badge">DEMO · DATA SIMULASI</span>
+        <div class="progress" id="progress"></div>
+      </div>
+
+      <div id="screenRoot"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const scenarios = {
+  normal: {
+    label: "Normal",
+    field: { water: "Kritis rendah", irrigation: "Kering", flow: "20%", soil: "Retak dangkal", freshness: "Saat ini", rawWater: "critical_low" },
+    assessment: { state: "Perlu perhatian lebih", confidence: "Sedang", type: "normal" }
+  },
+  missing: {
+    label: "Missing local evidence",
+    field: null,
+    assessment: { state: "Evidence belum cukup", confidence: "Rendah", type: "insufficient" }
+  },
+  stale: {
+    label: "Stale local evidence",
+    field: { water: "Kritis rendah", irrigation: "Kering", flow: "20%", soil: "Retak dangkal", freshness: "Sudah kedaluwarsa", rawWater: "critical_low" },
+    assessment: { state: "Evidence belum cukup", confidence: "Rendah", type: "insufficient" }
+  },
+  conflict: {
+    label: "Conflicting evidence",
+    field: { water: "Kritis rendah", irrigation: "Kering", flow: "20%", soil: "Retak dangkal", freshness: "Saat ini", rawWater: "critical_low" },
+    assessment: { state: "Evidence berbeda", confidence: "Rendah", type: "conflict" }
+  },
+  "engine-error": {
+    label: "Reasoning unavailable",
+    field: { water: "Kritis rendah", irrigation: "Kering", flow: "20%", soil: "Retak dangkal", freshness: "Saat ini", rawWater: "critical_low" },
+    assessment: { state: "Assessment tidak tersedia", confidence: "—", type: "error" }
+  }
+};
+
+const steps = ["decision","field","assessment","options","review","decision-final","record","handoff"];
+const progressSteps = ["decision","field","assessment","options","decision-final","record"];
+
+let state = {
+  scenario: "normal",
+  screen: "decision",
+  fieldUpdated: false,
+  selectedOption: null,
+  reviewRequested: false,
+  reviewResult: null,
+  finalDecision: "",
+  decisionSaved: false
+};
+
+function esc(s="") {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function currentScenario() {
+  let base = JSON.parse(JSON.stringify(scenarios[state.scenario]));
+  if (state.fieldUpdated) {
+    base.field = { water: "Kritis rendah", irrigation: "Kering", flow: "20%", soil: "Retak dangkal", freshness: "Baru diperbarui", rawWater: "critical_low" };
+    base.assessment = { state: "Perlu perhatian lebih", confidence: "Sedang", type: "normal" };
+  }
+  return base;
+}
+
+function topProgress() {
+  const idx = progressSteps.indexOf(state.screen);
+  const root = document.getElementById("progress");
+  root.innerHTML = progressSteps.map((x,i) => `<span class="${i <= Math.max(idx,0) ? 'active' : ''}"></span>`).join("");
+}
+
+function setScreen(screen) {
+  state.screen = screen;
+  render();
+}
+
+function btn(label, action, primary=false, extra="") {
+  return `<button class="btn ${primary?'primary':''} ${extra}" onclick="${action}">${label}</button>`;
+}
+
+function decisionScreen() {
+  return `
+  <section class="screen">
+    <h2>Kondisi air perlu ditinjau</h2>
+    <p class="lead">Pastikan konteks keputusan sebelum melihat evidence.</p>
+
+    <div class="card">
+      <dl class="kv">
+        <dt>Hamparan</dt><dd>Blok Tirto A3</dd>
+        <dt>Lokasi</dt><dd>Kepanjen, Kab. Malang</dd>
+        <dt>Tanaman</dt><dd>Padi · Inpari 32</dd>
+        <dt>Fase</dt><dd>Flowering</dd>
+      </dl>
+    </div>
+
+    <div class="card soft">
+      <h3>Pertanyaan keputusan</h3>
+      <p>Apakah rencana terkait kondisi air Blok Tirto A3 perlu ditinjau berdasarkan evidence saat ini?</p>
+    </div>
+
+    <p class="mini">RembukTani dimulai dari momen keputusan, bukan dashboard harian.</p>
+
+    <div class="footer-actions">
+      ${btn("Lanjut ke kondisi lapangan", "setScreen('field')", true)}
+    </div>
+  </section>`;
+}
+
+function fieldScreen() {
+  const s = currentScenario();
+  const f = s.field;
+
+  let content = "";
+  if (!f) {
+    content = `
+      <div class="warning">
+        <strong>Observasi kondisi air belum tersedia</strong>
+        Evidence lokal diperlukan agar informasi iklim dapat dibaca sesuai kondisi hamparan.
+      </div>
+      <div class="card dashed">
+        <h3>Yang perlu dilengkapi</h3>
+        <ul class="plain-list">
+          <li>Kondisi air hamparan</li>
+          <li>Status irigasi</li>
+          <li>Waktu observasi</li>
+        </ul>
+      </div>`;
+  } else {
+    content = `
+      ${f.freshness.includes("kedaluwarsa") ? `
+      <div class="warning">
+        <strong>Observasi ini sudah tidak cukup baru</strong>
+        Perbarui Field Pulse agar assessment tidak menggunakan kondisi lama sebagai kondisi saat ini.
+      </div>` : ""}
+      <div class="card">
+        <dl class="kv">
+          <dt>Kondisi air</dt><dd>${f.water}</dd>
+          <dt>Irigasi</dt><dd>${f.irrigation}</dd>
+          <dt>Aliran tercatat</dt><dd>${f.flow}</dd>
+          <dt>Permukaan tanah</dt><dd>${f.soil}</dd>
+          <dt>Status data</dt><dd>${f.freshness}</dd>
+        </dl>
+        <div class="evidence-meta">
+          Sumber: observasi lapangan fixture · Nilai 20% ditampilkan sebagai raw evidence, bukan threshold ilmiah.
+        </div>
+      </div>`;
+  }
+
+  return `
+  <section class="screen">
+    <h2>Field Pulse</h2>
+    <p class="lead">Apa kondisi aktual hamparan yang relevan?</p>
+    ${content}
+
+    <div class="input-group">
+      <label>Catatan lapangan (opsional)</label>
+      <textarea placeholder="Contoh: aliran terlihat berkurang sejak pagi"></textarea>
+    </div>
+
+    <div class="footer-actions">
+      ${btn("Kembali", "setScreen('decision')")}
+      ${(!f || f.freshness.includes("kedaluwarsa")) ? btn("Perbarui observasi", "updateField()", true) : btn("Gunakan evidence ini", "setScreen('assessment')", true)}
+      ${(!f || f.freshness.includes("kedaluwarsa")) ? btn("Lihat state tanpa update", "setScreen('assessment')", false, "linklike") : ""}
+    </div>
+  </section>`;
+}
+
+function assessmentScreen() {
+  const s = currentScenario();
+  const type = s.assessment.type;
+
+  if (type === "error") {
+    return `
+    <section class="screen">
+      <h2>Evidence & Assessment</h2>
+      <p class="lead">Evidence masih dapat dilihat, tetapi assessment gagal dihitung.</p>
+
+      ${evidenceCards(s)}
+
+      <div class="warning">
+        <strong>Assessment tidak tersedia</strong>
+        Sistem tidak membuat hasil pengganti yang terlihat meyakinkan. Coba lagi atau lanjutkan dengan verifikasi manual.
+      </div>
+
+      <div class="footer-actions">
+        ${btn("Kembali", "setScreen('field')")}
+        ${btn("Coba lagi", "retryReasoning()", true)}
+      </div>
+    </section>`;
+  }
+
+  if (type === "insufficient") {
+    const stale = s.field && s.field.freshness.includes("kedaluwarsa");
+    return `
+    <section class="screen">
+      <h2>Evidence & Assessment</h2>
+      <p class="lead">Sistem menunjukkan apa yang diketahui dan apa yang masih kurang.</p>
+
+      ${evidenceCards(s)}
+
+      <div class="warning">
+        <strong>${s.assessment.state}</strong>
+        Keyakinan: <b>${s.assessment.confidence}</b><br>
+        ${stale ? "Observasi air lokal sudah stale." : "Observasi air lokal terbaru belum tersedia."}
+      </div>
+
+      <div class="card">
+        <h3>Yang masih dibutuhkan</h3>
+        <ul class="plain-list"><li>Observasi kondisi air lokal yang masih current.</li></ul>
+      </div>
+
+      <div class="card soft">
+        <h3>Batas sistem</h3>
+        <p>Sistem berhenti pada <b>insufficient evidence</b> dan tidak memaksakan rekomendasi utama.</p>
+      </div>
+
+      <div class="footer-actions">
+        ${btn("Perbarui Field Pulse", "setScreen('field')")}
+        ${btn("Lihat langkah yang tersedia", "setScreen('options')", true)}
+      </div>
+    </section>`;
+  }
+
+  if (type === "conflict") {
+    return `
+    <section class="screen">
+      <h2>Evidence & Assessment</h2>
+      <p class="lead">Dua evidence lokal menunjukkan arah yang berbeda.</p>
+
+      ${evidenceCards(s)}
+
+      <div class="warning">
+        <strong>Evidence berbeda · Keyakinan rendah</strong>
+        Observasi lapangan: kondisi air <b>kritis rendah</b>.<br>
+        Observasi manusia fixture: ketersediaan air <b>memadai</b>.
+      </div>
+
+      <div class="card">
+        <h3>Apa yang dilakukan sistem?</h3>
+        <ul class="plain-list">
+          <li>Tidak memilih salah satu sumber secara diam-diam.</li>
+          <li>Menurunkan confidence.</li>
+          <li>Meminta klarifikasi evidence atau trusted review.</li>
+        </ul>
+      </div>
+
+      <div class="footer-actions">
+        ${btn("Kembali", "setScreen('field')")}
+        ${btn("Lihat pilihan", "setScreen('options')", true)}
+      </div>
+    </section>`;
+  }
+
+  return `
+  <section class="screen">
+    <h2>Evidence & Assessment</h2>
+    <p class="lead">Apa arti evidence ini terhadap keputusan kita?</p>
+
+    ${evidenceCards(s)}
+
+    <div class="card soft">
+      <span class="status fill">Perlu perhatian lebih</span>
+      <h3 style="margin-top:10px">Keyakinan sistem: Sedang</h3>
+      <p class="mini">Evidence minimum cukup untuk assessment deterministic, tetapi baseline masih prototype/mixed dan belum locally validated.</p>
+    </div>
+
+    <div class="card">
+      <h3>Kenapa assessment ini muncul?</h3>
+      <ul class="plain-list">
+        <li>External climate evidence mencatat kategori curah hujan <b>di bawah normal</b>.</li>
+        <li>Observasi lapangan mencatat kondisi air <b>kritis rendah / irigasi kering</b>.</li>
+        <li>Fase <b>flowering</b> menjadi sensitivity modifier karena local water-shortage signal sudah ada.</li>
+      </ul>
+    </div>
+
+    <div class="card dashed">
+      <h3>Masih perlu diketahui</h3>
+      <p>Konfirmasi kondisi/sumber/alokasi air terbaru sebelum perubahan operasional.</p>
+    </div>
+
+    <div class="card soft">
+      <h3>Limitation</h3>
+      <p>Baseline ini bukan model agronomi tervalidasi dan tidak memberi jumlah/durasi pengairan.</p>
+    </div>
+
+    <div class="footer-actions">
+      ${btn("Kembali", "setScreen('field')")}
+      ${btn("Lihat alternatif", "setScreen('options')", true)}
+    </div>
+  </section>`;
+}
+
+function evidenceCards(s) {
+  let fieldCard = "";
+  if (!s.field) {
+    fieldCard = `
+      <div class="card dashed">
+        <h3>Evidence lokal</h3>
+        <span class="status">Belum tersedia</span>
+      </div>`;
+  } else {
+    fieldCard = `
+      <div class="card">
+        <h3>Evidence lokal</h3>
+        <p><b>Kondisi air:</b> ${s.field.water}<br>
+        <b>Irigasi:</b> ${s.field.irrigation}<br>
+        <b>Aliran tercatat:</b> ${s.field.flow}</p>
+        <div class="evidence-meta">
+          Demo Farmer Group · direct observation fixture · ${s.field.freshness}
+        </div>
+      </div>`;
+  }
+
+  const humanConflict = state.scenario === "conflict" && !state.fieldUpdated
+    ? "Ketersediaan air: memadai"
+    : "Ketersediaan air: kritis rendah";
+
+  return `
+    <div class="section-title">Evidence yang digunakan</div>
+    <div class="card">
+      <h3>External climate evidence</h3>
+      <p><b>Curah hujan:</b> di bawah normal<br>
+      <b>Forecast:</b> 12.5 mm / 10 hari<br>
+      <b>Periode kering fixture:</b> 8 hari</p>
+      <div class="evidence-meta">BMKG · official_mock · current · data simulasi</div>
+    </div>
+    ${fieldCard}
+    <div class="card">
+      <h3>Human observation</h3>
+      <p>${humanConflict}</p>
+      <div class="evidence-meta">PPL fixture · manual · kualitas medium · optional evidence</div>
+    </div>`;
+}
+
+function optionsScreen() {
+  const s = currentScenario();
+  const type = s.assessment.type;
+
+  if (type === "insufficient") {
+    return `
+    <section class="screen">
+      <h2>Langkah yang tersedia</h2>
+      <p class="lead">Belum ada opsi utama. Sistem membantu memulihkan evidence.</p>
+
+      ${optionButton("collect", "Perbarui Field Pulse", "Tambahkan observasi kondisi air lokal yang masih current.", "Required evidence: fresh local water observation")}
+      ${optionButton("review", "Minta observasi / trusted review", "Gunakan pihak lapangan atau reviewer bila keputusan tidak dapat ditunda.", "Review tidak otomatis menggantikan blocking evidence")}
+
+      <div class="warning">
+        <strong>Sistem abstain</strong>
+        Tidak ada “best action” ketika evidence minimum belum cukup.
+      </div>
+
+      <div class="footer-actions">
+        ${btn("Kembali", "setScreen('assessment')")}
+        ${btn("Jalankan pilihan", "continueOption()", true)}
+      </div>
+    </section>`;
+  }
+
+  if (type === "conflict") {
+    return `
+    <section class="screen">
+      <h2>Alternatif saat evidence berbeda</h2>
+      <p class="lead">Tidak ada ranking. Pilih langkah untuk mengurangi uncertainty.</p>
+
+      ${optionButton("collect", "Perbarui observasi air", "Ambil evidence lokal terbaru untuk mengklarifikasi perbedaan.", "Confidence tetap rendah sampai conflict diklarifikasi")}
+      ${optionButton("review", "Minta trusted review", "Minta reviewer menilai perbedaan evidence dan konteks lapangan.", "Reviewer tetap advisory")}
+
+      <div class="footer-actions">
+        ${btn("Kembali", "setScreen('assessment')")}
+        ${btn("Lanjut", "continueOption()", true)}
+      </div>
+    </section>`;
+  }
+
+  return `
+  <section class="screen">
+    <h2>Alternatif tindakan</h2>
+    <p class="lead">Beberapa pilihan yang dapat dipertimbangkan. Tidak ada “best option” pada baseline ini.</p>
+
+    ${optionButton("verify", "A · Verifikasi & siapkan penyesuaian", "Verifikasi kondisi air terkini dan siapkan penyesuaian bila kondisi kritis terkonfirmasi.", "Conditional · masih membutuhkan konfirmasi kondisi/sumber air terbaru")}
+    ${optionButton("collect", "B · Tambah evidence dulu", "Pertahankan rencana sementara sambil meminta observasi/kondisi air terbaru.", "Tidak menilai consequence agronomis dari menunda")}
+    ${optionButton("review", "C · Minta trusted review", "Minta reviewer tepercaya menilai kondisi dan trade-off.", "Review optional · reviewer bukan final authority")}
+
+    <div class="footer-actions">
+      ${btn("Kembali", "setScreen('assessment')")}
+      ${btn("Lanjut", "continueOption()", true)}
+    </div>
+  </section>`;
+}
+
+function optionButton(id, title, desc, note) {
+  const selected = state.selectedOption === id ? "selected" : "";
+  return `<button class="option ${selected}" onclick="selectOption('${id}')">
+    <strong>${title}</strong>
+    ${desc}
+    <small>${note}</small>
+  </button>`;
+}
+
+function reviewScreen() {
+  return `
+  <section class="screen">
+    <h2>Trusted Review</h2>
+    <p class="lead">Review ini optional. PPL adalah fixture reviewer, bukan mandatory gate.</p>
+
+    <div class="card">
+      <h3>Bu Sari · PPL fixture</h3>
+      <p>Reviewer melihat evidence, assessment, dan opsi yang sedang dipertimbangkan.</p>
+    </div>
+
+    <div class="review-box">
+      <strong>Simulasi hasil review: Ubah</strong>
+      <p>“Pastikan kondisi sumber/alokasi air terbaru dikonfirmasi sebelum perubahan rencana ditetapkan.”</p>
+    </div>
+
+    <div class="card soft">
+      <h3>Yang berubah</h3>
+      <p>Tambahkan verifikasi kondisi/alokasi air sebagai langkah sebelum perubahan rencana.</p>
+    </div>
+
+    <div class="footer-actions">
+      ${btn("Lewati review", "skipReview()")}
+      ${btn("Gunakan catatan review", "acceptReview()", true)}
+    </div>
+  </section>`;
+}
+
+function finalDecisionScreen() {
+  const reviewNote = state.reviewResult
+    ? `<div class="review-box"><b>Catatan review:</b><br>Pastikan kondisi sumber/alokasi air terbaru dikonfirmasi sebelum perubahan rencana.</div>`
+    : `<div class="card dashed"><b>Review:</b> Tidak diminta / dilewati.</div>`;
+
+  let defaultText = "Lakukan verifikasi kondisi/alokasi air terbaru Blok Tirto A3. Setelah verifikasi, pengurus menetapkan apakah rencana terkait air perlu disesuaikan.";
+  if (state.selectedOption === "collect") {
+    defaultText = "Kumpulkan observasi kondisi air terbaru sebelum menetapkan perubahan rencana.";
+  } else if (state.selectedOption === "review") {
+    defaultText = "Gunakan pertimbangan reviewer dan verifikasi kondisi air terbaru sebelum menetapkan perubahan rencana.";
+  }
+  if (!state.finalDecision) state.finalDecision = defaultText;
+
+  return `
+  <section class="screen">
+    <h2>Buat keputusan akhir</h2>
+    <p class="lead">Sistem berhenti pada assessment dan alternatif. Anda menetapkan keputusan.</p>
+
+    <div class="human-boundary">
+      <strong>Human Decision Boundary</strong>
+      Final authority berada pada manusia. Anda boleh mengikuti, mengubah, atau berbeda dari opsi sistem.
+    </div>
+
+    ${reviewNote}
+
+    <div class="input-group">
+      <label>Keputusan akhir</label>
+      <textarea id="decisionText" oninput="state.finalDecision=this.value">${esc(state.finalDecision)}</textarea>
+    </div>
+
+    <div class="input-group">
+      <label>Alasan keputusan</label>
+      <textarea id="rationaleText">Assessment menunjukkan perlu perhatian lebih, tetapi kondisi/sumber air terbaru tetap perlu dikonfirmasi.</textarea>
+    </div>
+
+    <div class="card soft">
+      <b>Assessment sistem:</b> ${currentScenario().assessment.state}<br>
+      <b>Keyakinan:</b> ${currentScenario().assessment.confidence}<br>
+      <span class="mini">Assessment tidak berubah hanya agar terlihat sama dengan keputusan manusia.</span>
+    </div>
+
+    <div class="footer-actions">
+      ${btn("Kembali", "setScreen(state.reviewRequested ? 'review' : 'options')")}
+      ${btn("Konfirmasi keputusan manusia", "saveDecision()", true)}
+    </div>
+  </section>`;
+}
+
+function recordScreen() {
+  return `
+  <section class="screen">
+    <h2>Decision Record</h2>
+    <p class="lead">Keputusan tersimpan bersama evidence dan assessment yang mendasarinya.</p>
+
+    <div class="human-boundary">
+      <strong>Keputusan Manusia · Tercatat</strong>
+      ${esc(state.finalDecision || "Keputusan demo")}
+    </div>
+
+    <div class="card">
+      <dl class="kv">
+        <dt>Decision owner</dt><dd>Decision facilitator</dd>
+        <dt>Assessment</dt><dd>${currentScenario().assessment.state}</dd>
+        <dt>Confidence</dt><dd>${currentScenario().assessment.confidence}</dd>
+        <dt>Review</dt><dd>${state.reviewResult ? "Modified · catatan terhubung" : "Tidak diminta"}</dd>
+        <dt>Data</dt><dd>MOCK / DEMO</dd>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h3>Trace yang tersimpan</h3>
+      <ul class="plain-list">
+        <li>External climate evidence · BMKG mock</li>
+        <li>Local field evidence / status missing sesuai scenario</li>
+        <li>Assessment version + reasoning baseline</li>
+        <li>Review status bila ada</li>
+        <li>Rationale + timestamp</li>
+      </ul>
+    </div>
+
+    <p class="mini">Core journey selesai di Decision Record. Task/outcome tidak diperlukan agar record valid.</p>
+
+    <div class="footer-actions">
+      ${btn("Ulangi test", "resetPrototype()")}
+      ${btn("Bagikan / handoff", "setScreen('handoff')", true)}
+    </div>
+  </section>`;
+}
+
+function handoffScreen() {
+  return `
+  <section class="screen">
+    <h2>Bagikan keputusan</h2>
+    <p class="lead">Lanjutkan melalui kanal yang sudah digunakan. Ini bukan internal chat atau Action Tracker kompleks.</p>
+
+    <div class="card">
+      <h3>Ringkasan siap dibagikan</h3>
+      <p>${esc(state.finalDecision || "Keputusan demo")}</p>
+      <button class="btn" onclick="copySummary()">Salin ringkasan</button>
+    </div>
+
+    <div class="card dashed">
+      <h3>Optional lightweight handoff</h3>
+      <dl class="kv">
+        <dt>Peran</dt><dd>Pengurus / petugas relevan</dd>
+        <dt>Window</dt><dd>Hari ini</dd>
+        <dt>Status</dt><dd>Belum dikonfirmasi</dd>
+        <dt>Outcome</dt><dd>Belum tersedia</dd>
+      </dl>
+    </div>
+
+    <p class="mini">Extension ini dapat dihapus tanpa merusak core value RembukTani.</p>
+
+    <div class="footer-actions">
+      ${btn("Kembali ke record", "setScreen('record')")}
+      ${btn("Selesai", "resetPrototype()", true)}
+    </div>
+  </section>`;
+}
+
+function render() {
+  const root = document.getElementById("screenRoot");
+  const screens = {
+    decision: decisionScreen,
+    field: fieldScreen,
+    assessment: assessmentScreen,
+    options: optionsScreen,
+    review: reviewScreen,
+    "decision-final": finalDecisionScreen,
+    record: recordScreen,
+    handoff: handoffScreen
+  };
+  root.innerHTML = screens[state.screen]();
+  topProgress();
+  document.getElementById("stateLog").textContent = JSON.stringify({
+    scenario: state.scenario,
+    screen: state.screen,
+    fieldUpdated: state.fieldUpdated,
+    selectedOption: state.selectedOption,
+    reviewRequested: state.reviewRequested,
+    reviewResult: state.reviewResult,
+    decisionSaved: state.decisionSaved
+  }, null, 2);
+}
+
+function updateField() {
+  state.fieldUpdated = true;
+  setScreen("assessment");
+}
+
+function retryReasoning() {
+  state.scenario = "normal";
+  document.getElementById("scenario").value = "normal";
+  setScreen("assessment");
+}
+
+function selectOption(id) {
+  state.selectedOption = id;
+  render();
+}
+
+function continueOption() {
+  if (!state.selectedOption) {
+    alert("Pilih satu langkah untuk melanjutkan test.");
+    return;
+  }
+  if (state.selectedOption === "collect") {
+    setScreen("field");
+    return;
+  }
+  if (state.selectedOption === "review") {
+    state.reviewRequested = true;
+    setScreen("review");
+    return;
+  }
+  setScreen("decision-final");
+}
+
+function skipReview() {
+  state.reviewRequested = false;
+  state.reviewResult = null;
+  setScreen("decision-final");
+}
+
+function acceptReview() {
+  state.reviewRequested = true;
+  state.reviewResult = "modified";
+  setScreen("decision-final");
+}
+
+function saveDecision() {
+  const el = document.getElementById("decisionText");
+  if (el) state.finalDecision = el.value.trim();
+  if (!state.finalDecision) {
+    alert("Isi keputusan akhir sebelum disimpan.");
+    return;
+  }
+  state.decisionSaved = true;
+  setScreen("record");
+}
+
+function copySummary() {
+  const text = state.finalDecision || "Keputusan demo";
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => alert("Ringkasan disalin."));
+  } else {
+    alert("Prototype: ringkasan siap disalin.");
+  }
+}
+
+function resetPrototype() {
+  const selectedScenario = document.getElementById("scenario").value;
+  state = {
+    scenario: selectedScenario,
+    screen: "decision",
+    fieldUpdated: false,
+    selectedOption: null,
+    reviewRequested: false,
+    reviewResult: null,
+    finalDecision: "",
+    decisionSaved: false
+  };
+  render();
+}
+
+document.getElementById("scenario").addEventListener("change", e => {
+  state.scenario = e.target.value;
+  state.screen = "decision";
+  state.fieldUpdated = false;
+  state.selectedOption = null;
+  state.reviewRequested = false;
+  state.reviewResult = null;
+  state.finalDecision = "";
+  state.decisionSaved = false;
+  render();
+});
+document.getElementById("startAt").addEventListener("change", e => {
+  state.screen = e.target.value;
+  render();
+});
+document.getElementById("resetBtn").addEventListener("click", resetPrototype);
+
+render();
+</script>
+</body>
+</html>

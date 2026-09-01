@@ -1,0 +1,4 @@
+participant_id,participant_type,scenario,date,duration_minutes,core_task_completion_0_2,facilitator_rescue_level,evidence_comprehension_0_2,explanation_comprehension_0_2,human_control_0_2,mock_recognition_0_1,review_understood_optional_yes_no,decision_record_understood_yes_no,participant_final_decision,most_confusing_part,verbatim_quote,observer_notes,session_complete_yes_no
+P1,proxy_decision_facilitator,normal,,,,,,,,,,,,,,,no
+P2,proxy_or_target_informed,missing_evidence,,,,,,,,,,,,,,,no
+P3,independent_proxy,normal_review_probe,,,,,,,,,,,,,,,no

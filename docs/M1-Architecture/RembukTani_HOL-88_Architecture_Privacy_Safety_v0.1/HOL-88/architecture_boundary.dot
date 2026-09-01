@@ -1,0 +1,74 @@
+digraph G {
+  rankdir=LR;
+  graph [fontname="Arial", fontsize=10, labelloc="t", label="RembukTani M1 — Architecture / Trust Boundaries v0.1"];
+  node [shape=box, fontname="Arial", fontsize=9];
+  edge [fontname="Arial", fontsize=8];
+
+  subgraph cluster_ext {
+    label="TB-0 External / Source Boundary";
+    ext [label="External Agricultural / Climate Sources\n(Live / real evidence)"];
+    fix [label="Versioned Demo Fixtures\n(MOCK / DEMO only)"];
+  }
+
+  subgraph cluster_user {
+    label="TB-1 User Device Boundary";
+    df [label="Decision Facilitator UI"];
+    fc [label="Field Contributor UI"];
+    tr [label="Trusted Reviewer UI\n(optional)"];
+  }
+
+  subgraph cluster_app {
+    label="TB-2 Application / Reasoning Boundary";
+    auth [label="Identity / Role Gate\n(TBD implementation)"];
+    api [label="Application / API Orchestrator"];
+    ingest [label="Evidence Ingestion Adapters"];
+    val [label="HOL-86 Contract Validator\n+ Normalizer"];
+    reason [label="HOL-87 Deterministic\nReasoning Engine"];
+    review [label="Optional Review Service"];
+    decision [label="Human Decision /\nDecision Record Service"];
+    share [label="Optional Share / Handoff"];
+    obs [label="Observability\n(redacted metadata)"];
+  }
+
+  subgraph cluster_data {
+    label="TB-4 Persistence Boundary";
+    db [shape=cylinder, label="Operational Persistence\nDecision Contexts / Evidence /\nAssessments / Options / Reviews /\nDecision Records"];
+  }
+
+  subgraph cluster_secret {
+    label="Secrets Boundary";
+    sec [shape=cylinder, label="Secrets / API Credentials\nNOT domain data / NOT logs"];
+  }
+
+  ext -> ingest [label="live evidence"];
+  fix -> ingest [style=dashed, label="demo/staging only"];
+  fc -> auth [label="local observation"];
+  df -> auth [label="decision actions"];
+  tr -> auth [label="review request/response"];
+  auth -> api;
+  api -> ingest [label="manual/local evidence"];
+  ingest -> val;
+  val -> db [label="canonical evidence"];
+  val -> reason [label="validated evidence + context"];
+  reason -> db [label="assessment + options"];
+  reason -> api [label="assessment + options"];
+  api -> df [label="explainable output"];
+  api -> review;
+  review -> db [label="review"];
+  review -> api;
+  df -> decision [label="explicit HUMAN confirmation"];
+  api -> decision [label="validated context/snapshots"];
+  decision -> db [label="immutable/revisioned record"];
+  decision -> share;
+  share -> df;
+
+  api -> obs [style=dotted];
+  reason -> obs [style=dotted];
+  decision -> obs [style=dotted];
+
+  sec -> auth [style=dashed, label="auth secret"];
+  sec -> ingest [style=dashed, label="external API secret"];
+
+  noauto [shape=note, label="SAFETY BOUNDARY:\nNo direct Reasoner → Final Decision\nNo Reasoner → irrigation/control action"];
+  reason -> noauto [style=dotted, arrowhead=none];
+}

@@ -1,0 +1,1049 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rembuktani.local/schema/canonical-decision-contract/0.1.0",
+  "title": "RembukTani Canonical Evidence & Decision Contract v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "bundle_id",
+    "scenario_id",
+    "environment",
+    "workflow_state",
+    "decision_context",
+    "evidence",
+    "assessment",
+    "action_options",
+    "trusted_reviews",
+    "decision_record"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "0.1.0"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "enum": [
+        "demo",
+        "prototype",
+        "production"
+      ]
+    },
+    "workflow_state": {
+      "enum": [
+        "draft_context",
+        "context_ready",
+        "evidence_incomplete",
+        "evidence_ready",
+        "assessing",
+        "assessed",
+        "insufficient_evidence",
+        "assessment_unavailable",
+        "options_ready",
+        "review_pending",
+        "reviewed",
+        "decision_ready",
+        "decision_confirmed",
+        "decision_recorded",
+        "shared_optional"
+      ]
+    },
+    "decision_context": {
+      "$ref": "#/$defs/decision_context"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "minItems": 1
+    },
+    "assessment": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/assessment"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "action_options": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action_option"
+      }
+    },
+    "trusted_reviews": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trusted_review"
+      }
+    },
+    "decision_record": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/decision_record"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "handoff": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/handoff"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "$defs": {
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "district"
+      ],
+      "properties": {
+        "country": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "regency": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string",
+          "minLength": 1
+        },
+        "village": {
+          "type": "string"
+        },
+        "hamparan_name": {
+          "type": "string"
+        },
+        "location_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "crop_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "crop"
+      ],
+      "properties": {
+        "crop": {
+          "type": "string",
+          "minLength": 1
+        },
+        "variety": {
+          "type": "string"
+        },
+        "growth_stage": {
+          "type": "string"
+        },
+        "planting_date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "actor_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "actor_id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name": {
+          "type": "string"
+        }
+      }
+    },
+    "object_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "decision_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_context_id",
+        "version",
+        "status",
+        "decision_question",
+        "trigger",
+        "location",
+        "crop_context",
+        "created_at",
+        "updated_at",
+        "is_mock"
+      ],
+      "properties": {
+        "decision_context_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "active",
+            "decision_recorded",
+            "archived"
+          ]
+        },
+        "decision_question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "description"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "manual_review",
+                "external_signal",
+                "local_observation",
+                "new_evidence",
+                "other"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "detected_by": {
+              "type": "string"
+            }
+          }
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "crop_context": {
+          "$ref": "#/$defs/crop_context"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "is_mock": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "evidence_type",
+        "source",
+        "provenance",
+        "location",
+        "observed_at",
+        "valid_until",
+        "quality",
+        "payload"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_version": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "evidence_type": {
+          "enum": [
+            "climate_external",
+            "field_observation",
+            "human_observation"
+          ]
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "category",
+            "name"
+          ],
+          "properties": {
+            "category": {
+              "enum": [
+                "official_mock",
+                "official_external",
+                "group_observation",
+                "extension_worker",
+                "trusted_reviewer",
+                "manual_other",
+                "system_fixture"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reference": {
+              "type": "string"
+            }
+          }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "collection_mode",
+            "is_mock"
+          ],
+          "properties": {
+            "collection_mode": {
+              "enum": [
+                "fixture",
+                "manual",
+                "api",
+                "import"
+              ]
+            },
+            "is_mock": {
+              "type": "boolean"
+            },
+            "fallback_reason": {
+              "type": "string"
+            },
+            "ingested_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level",
+            "basis"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "high",
+                "medium",
+                "low",
+                "unknown"
+              ]
+            },
+            "basis": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "payload": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence_evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "evidence_version",
+        "schema_status",
+        "freshness_status",
+        "relevance_status",
+        "issues"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "schema_status": {
+          "enum": [
+            "valid",
+            "invalid"
+          ]
+        },
+        "freshness_status": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ]
+        },
+        "relevance_status": {
+          "enum": [
+            "relevant",
+            "uncertain",
+            "not_relevant"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "factor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "factor_id",
+        "label",
+        "linked_evidence_refs"
+      ],
+      "properties": {
+        "factor_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "enum": [
+            "supports_attention",
+            "reduces_attention",
+            "neutral",
+            "unknown"
+          ]
+        },
+        "linked_evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          }
+        },
+        "rule_id": {
+          "type": "string"
+        }
+      }
+    },
+    "missing_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "description",
+        "impact"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "enum": [
+            "blocking",
+            "material",
+            "non_blocking",
+            "unknown"
+          ]
+        },
+        "requested_evidence_type": {
+          "enum": [
+            "climate_external",
+            "field_observation",
+            "human_observation",
+            "other"
+          ]
+        }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_id",
+        "version",
+        "decision_context_ref",
+        "status",
+        "evaluated_at",
+        "reasoning",
+        "context_state",
+        "confidence",
+        "factors",
+        "evidence_evaluations",
+        "missing_evidence",
+        "limitations",
+        "action_option_ids",
+        "recommendation"
+      ],
+      "properties": {
+        "assessment_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decision_context_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "insufficient_evidence",
+            "unavailable"
+          ]
+        },
+        "evaluated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reasoning": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "engine_id",
+            "engine_version",
+            "rule_set_version",
+            "baseline_status"
+          ],
+          "properties": {
+            "engine_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "engine_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rule_set_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "baseline_status": {
+              "enum": [
+                "prototype_rule",
+                "curated_rule",
+                "mixed"
+              ]
+            }
+          }
+        },
+        "context_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "unknown"
+          ]
+        },
+        "factors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/factor"
+          }
+        },
+        "evidence_evaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_evaluation"
+          }
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/missing_evidence"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "action_option_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "recommended_option_id"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "not_enabled",
+                "abstained",
+                "alternatives_only",
+                "ranked"
+              ]
+            },
+            "recommended_option_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "why": {
+              "type": "string"
+            },
+            "change_conditions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "input_evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          }
+        }
+      }
+    },
+    "action_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "option_id",
+        "decision_context_ref",
+        "assessment_ref",
+        "origin",
+        "option_type",
+        "label",
+        "description",
+        "rationale",
+        "supporting_evidence_refs",
+        "limitations",
+        "required_evidence",
+        "eligibility"
+      ],
+      "properties": {
+        "option_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_context_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "assessment_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "origin": {
+          "enum": [
+            "system_baseline",
+            "human",
+            "reviewer"
+          ]
+        },
+        "option_type": {
+          "enum": [
+            "action",
+            "collect_more_evidence",
+            "request_review",
+            "defer"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supporting_evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/missing_evidence"
+          }
+        },
+        "eligibility": {
+          "enum": [
+            "eligible",
+            "conditional",
+            "not_eligible"
+          ]
+        },
+        "rank": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    },
+    "trusted_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "decision_context_ref",
+        "assessment_ref",
+        "reviewer",
+        "status",
+        "reviewed_at",
+        "note"
+      ],
+      "properties": {
+        "review_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_context_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "assessment_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "reviewer": {
+          "$ref": "#/$defs/actor_ref"
+        },
+        "status": {
+          "enum": [
+            "approved",
+            "modified",
+            "rejected",
+            "unavailable",
+            "cancelled"
+          ]
+        },
+        "reviewed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "target_option_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": "string"
+        },
+        "modification": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "description",
+                "reason"
+              ],
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "decision_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_record_id",
+        "revision",
+        "decision_context_ref",
+        "status",
+        "decided_at",
+        "authority",
+        "decision_facilitator",
+        "final_decision",
+        "rationale",
+        "considered_option_ids",
+        "evidence_snapshot_refs",
+        "assessment_snapshot_ref",
+        "review_status",
+        "limitations",
+        "is_mock"
+      ],
+      "properties": {
+        "decision_record_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decision_context_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "status": {
+          "enum": [
+            "recorded",
+            "superseded"
+          ]
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "authority": {
+          "const": "human"
+        },
+        "decision_facilitator": {
+          "$ref": "#/$defs/actor_ref"
+        },
+        "final_decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selected_option_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "considered_option_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "system_recommended_option_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision_relation_to_system": {
+          "enum": [
+            "aligned",
+            "modified",
+            "different",
+            "no_recommendation",
+            "not_applicable"
+          ]
+        },
+        "evidence_snapshot_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_ref"
+          },
+          "minItems": 1
+        },
+        "assessment_snapshot_ref": {
+          "$ref": "#/$defs/object_ref"
+        },
+        "review_snapshot_ref": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "review_id"
+              ],
+              "properties": {
+                "review_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "review_status": {
+          "enum": [
+            "not_requested",
+            "skipped",
+            "approved",
+            "modified",
+            "rejected",
+            "unavailable"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "is_mock": {
+          "type": "boolean"
+        },
+        "supersedes_record_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handoff_id",
+        "decision_record_id",
+        "channel",
+        "status"
+      ],
+      "properties": {
+        "handoff_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_record_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "enum": [
+            "copy_summary",
+            "whatsapp",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": [
+            "prepared",
+            "shared",
+            "failed"
+          ]
+        },
+        "responsible_role": {
+          "type": "string"
+        },
+        "execution_window": {
+          "type": "string"
+        },
+        "action_status": {
+          "type": "string"
+        },
+        "exception": {
+          "type": "string"
+        },
+        "outcome_note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

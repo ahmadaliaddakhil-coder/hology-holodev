@@ -1,0 +1,6 @@
+=== HOL-84 RAPID USABILITY SUMMARY ===
+Completed sessions: 0/3
+No participant results yet. HOL-84 remains READY TO RUN / RESULTS PENDING.
+
+Top UX issues:
+- No participant-derived issues entered yet.

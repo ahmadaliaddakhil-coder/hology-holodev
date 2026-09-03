@@ -1,0 +1,71 @@
+[
+  {
+    "id": "T1_NORMAL",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice", "growth_stage": "flowering"},
+      "bmkg": {"available": true, "cached": false, "analysis_time": "2026-09-03T00:00:00Z", "target_times": ["2026-09-03T09:00:00Z"], "weather_descriptions": ["Cerah"]},
+      "field_pulse": {"water_presence": "limited", "irrigation_flow": "not_flowing", "observed_at": "2026-09-03T08:10:00Z"}
+    },
+    "expected": {"status": "available", "context_state": "context_available", "confidence": "medium", "recommendation_mode": "alternatives_only"}
+  },
+  {
+    "id": "T2_FIELD_PULSE_UNKNOWN",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": true, "cached": false, "analysis_time": "2026-09-03T00:00:00Z", "target_times": ["2026-09-03T09:00:00Z"], "weather_descriptions": ["Cerah"]},
+      "field_pulse": {"water_presence": "unknown", "irrigation_flow": "unknown", "observed_at": "2026-09-03T08:10:00Z"}
+    },
+    "expected": {"status": "available", "context_state": "needs_verification", "confidence": "low", "recommendation_mode": "alternatives_only"}
+  },
+  {
+    "id": "T3_BMKG_UNAVAILABLE",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": false, "cached": false},
+      "field_pulse": {"water_presence": "present", "irrigation_flow": "flowing", "observed_at": "2026-09-03T08:10:00Z"}
+    },
+    "expected": {"status": "insufficient_evidence", "context_state": "insufficient_evidence", "confidence": "low", "recommendation_mode": "abstained"}
+  },
+  {
+    "id": "T4_CACHED_BMKG",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": true, "cached": true, "analysis_time": "2026-09-03T00:00:00Z", "target_times": ["2026-09-03T09:00:00Z"], "weather_descriptions": ["Cerah"]},
+      "field_pulse": {"water_presence": "limited", "irrigation_flow": "limited", "observed_at": "2026-09-03T08:10:00Z"}
+    },
+    "expected": {"status": "available", "context_state": "context_available", "confidence": "medium", "recommendation_mode": "alternatives_only", "bmkg_delivery": "cached"}
+  },
+  {
+    "id": "T5_CONFLICTING_LOCAL_OBSERVATION",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": true, "cached": false, "analysis_time": "2026-09-03T00:00:00Z", "target_times": ["2026-09-03T09:00:00Z"], "weather_descriptions": ["Cerah"]},
+      "field_pulse": {"water_presence": "present", "irrigation_flow": "flowing", "observed_at": "2026-09-03T08:10:00Z"},
+      "comparable_local_observation": {"water_presence": "none", "observed_at": "2026-09-03T08:11:00Z"}
+    },
+    "expected": {"status": "available", "context_state": "conflicting_local_evidence", "confidence": "low", "recommendation_mode": "alternatives_only"}
+  },
+  {
+    "id": "T6_REASONING_FAILURE",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "simulate_reasoning_failure": true,
+      "bmkg": {"available": true, "cached": false, "analysis_time": "2026-09-03T00:00:00Z", "target_times": ["2026-09-03T09:00:00Z"]},
+      "field_pulse": {"water_presence": "present", "irrigation_flow": "flowing", "observed_at": "2026-09-03T08:10:00Z"}
+    },
+    "expected": {"status": "assessment_unavailable", "context_state": "unavailable", "confidence": "unknown", "recommendation_mode": "abstained"}
+  }
+]
+

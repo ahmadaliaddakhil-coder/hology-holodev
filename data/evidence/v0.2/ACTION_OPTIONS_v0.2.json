@@ -1,0 +1,32 @@
+{
+  "version": "v0.2",
+  "options": [
+    {
+      "option_id": "OPT-VERIFY-FIELD",
+      "type": "verify_local_condition",
+      "label": "Periksa kembali kondisi lahan",
+      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+    },
+    {
+      "option_id": "OPT-COLLECT-WATER-SOURCE",
+      "type": "collect_missing_information",
+      "label": "Konfirmasi kondisi atau alokasi sumber air",
+      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+    },
+    {
+      "option_id": "OPT-REQUEST-REVIEW",
+      "type": "request_trusted_review",
+      "label": "Minta pertimbangan pihak tepercaya",
+      "allowed_states": ["context_available", "needs_verification"]
+    },
+    {
+      "option_id": "OPT-DEFER",
+      "type": "defer",
+      "label": "Tunda perubahan sampai informasi cukup",
+      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+    }
+  ],
+  "ranking": null,
+  "prescriptive_parameters": false
+}
+

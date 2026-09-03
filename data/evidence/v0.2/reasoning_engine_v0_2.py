@@ -91,7 +91,7 @@ def assess(payload):
             "action_options": option_ids(state),
             "recommendation": {"mode": mode, "recommended_option_id": None},
         })
-        return base
+        return {"assessment": base}
     except Exception:
         base.update({
             "status": "assessment_unavailable",
@@ -101,5 +101,4 @@ def assess(payload):
             "recommendation": {"mode": "abstained", "recommended_option_id": None},
             "limitations": base["limitations"] + ["reasoning_execution_failed"],
         })
-        return base
-
+        return {"assessment": base}

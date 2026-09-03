@@ -8,8 +8,9 @@ Pada evaluation time `T`:
 
 - `current`: ada minimal satu slot dengan `target_time_utc >= T`, analysis time
   valid, dan respons berhasil dinormalisasi.
-- `stale`: cache ada tetapi tidak mempunyai slot target pada/ setelah `T`, atau
-  versi analysis lebih lama dipakai setelah fetch live gagal.
+- `stale`: evidence—live ataupun cached—tidak mempunyai slot target pada/setelah
+  `T`. Umur `analysis_date` sendiri dicatat dan ditampilkan, tetapi pada M2 tidak
+  diberi expiry arbitrer selama masih ada target slot yang relevan.
 - `unavailable`: tidak ada cache usable atau payload tidak dapat dinormalisasi.
 
 UI wajib menyebut `cached` terpisah dari freshness. Cached evidence dapat tetap
@@ -32,4 +33,3 @@ M2 tidak mengarang expiry agronomis universal. Field Pulse dinilai:
 - Clock comparison menggunakan instant UTC.
 - Future clock anomaly, invalid timestamp, dan `analysis_date` setelah
   `fetched_at` menghasilkan unavailable/error, bukan koreksi diam-diam.
-

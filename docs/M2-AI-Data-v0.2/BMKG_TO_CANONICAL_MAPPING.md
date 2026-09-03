@@ -24,6 +24,6 @@
   separate entity and must be linked through the verified resolver result.
 - Unknown additional BMKG fields remain only in raw payload.
 
-Sample implementable JSON tersedia di
-`data/evidence/v0.2/fixtures/T1_normal.input.json`.
-
+Sample canonical lengkap yang dapat langsung dipakai Full-stack tersedia di
+`data/evidence/v0.2/bmkg_canonical_example.json`. Fixture reasoner yang lebih
+ringkas tetap tersedia di `data/evidence/v0.2/fixtures/T1_normal.input.json`.

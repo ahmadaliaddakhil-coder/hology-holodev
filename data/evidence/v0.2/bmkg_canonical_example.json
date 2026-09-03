@@ -1,0 +1,59 @@
+{
+  "evidence_id": "EVD-BMKG-31.71.03.1001-20260903T000000Z",
+  "evidence_type": "climate_external",
+  "land_ref": {"land_id": "LAND-DEMO-001"},
+  "decision_case_ref": {"decision_case_id": "CASE-DEMO-001"},
+  "source": {
+    "category": "official",
+    "name": "BMKG",
+    "attribution_required": true,
+    "documentation_url": "https://data.bmkg.go.id/prakiraan-cuaca/"
+  },
+  "provenance": {
+    "collection_mode": "external_api",
+    "is_mock": false,
+    "fetched_at": "2026-09-03T08:05:00Z",
+    "request": {"uri": "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=31.71.03.1001"},
+    "raw_payload_ref": "bmkg://31.71.03.1001/2026-09-03T00:00:00Z"
+  },
+  "location": {
+    "administrative": {
+      "adm1": "31",
+      "adm2": "31.71",
+      "adm3": "31.71.03",
+      "adm4": "31.71.03.1001",
+      "province": "DKI Jakarta",
+      "regency": "Kota Adm. Jakarta Pusat",
+      "district": "Kemayoran",
+      "village": "Kemayoran"
+    },
+    "source_point": {"lat": -6.1647214778, "lon": 106.8453837867},
+    "timezone": "Asia/Jakarta"
+  },
+  "temporal": {
+    "analysis_time": "2026-09-03T00:00:00Z",
+    "first_target_time": "2026-09-03T03:00:00Z",
+    "last_target_time": "2026-09-05T15:00:00Z"
+  },
+  "quality": {
+    "level": "unknown",
+    "basis": "official_source_without_rembuktani_accuracy_calibration"
+  },
+  "payload": {
+    "analysis_time": "2026-09-03T00:00:00Z",
+    "forecast_slots": [
+      {
+        "target_time_utc": "2026-09-03T09:00:00Z",
+        "target_time_local": "2026-09-03 16:00:00",
+        "t": 30,
+        "hu": 57,
+        "weather_desc": "Cerah",
+        "weather_desc_en": "Sunny",
+        "ws": 13.1,
+        "wd": "N",
+        "tcc": 2,
+        "vs_text": "> 10 km"
+      }
+    ]
+  }
+}

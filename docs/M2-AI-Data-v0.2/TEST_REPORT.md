@@ -15,7 +15,8 @@ T6_REASONING_FAILURE: PASS
 6 scenarios passed; same input + evaluation time = same output
 ```
 
-Seluruh JSON pada `data/evidence/v0.2/` juga berhasil diparse. Test memastikan:
+Seluruh JSON pada `data/evidence/v0.2/` juga berhasil diparse dan input/output
+setiap skenario lolos JSON Schema draft 2020-12. Test memastikan:
 
 - output repeatable untuk input dan evaluation time yang sama;
 - confidence `high` tidak digunakan;
@@ -23,4 +24,3 @@ Seluruh JSON pada `data/evidence/v0.2/` juga berhasil diparse. Test memastikan:
 - missing BMKG menyebabkan abstention;
 - unknown Field Pulse tetap valid tetapi meminta verifikasi;
 - reasoning failure tidak menghasilkan assessment palsu.
-

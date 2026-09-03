@@ -5,6 +5,11 @@
 Input: normalized BMKG forecast, active Crop Context snapshot, dan Field Pulse.
 Output: assessment transparan + bounded alternatives. Final decision selalu user.
 
+Reference engine menerima projection evaluasi (`available`, `cached`,
+`analysis_time`, `target_times`, dan optional `weather_descriptions`) dari
+canonical BMKG evidence. Evidence Service tetap menyimpan canonical object dan
+raw reference penuh; projection bukan pengganti evidence record.
+
 ## Audit v0.1
 
 | Rule/konsep v0.1 | Keputusan v0.2 | Alasan |
@@ -38,18 +43,19 @@ Output: assessment transparan + bounded alternatives. Final decision selalu user
 
 ```json
 {
-  "status": "available",
-  "context_state": "context_available",
-  "confidence": "medium",
-  "factors": [],
-  "missing_evidence": [],
-  "limitations": [],
-  "action_options": [],
-  "recommendation": {"mode": "alternatives_only", "recommended_option_id": null},
-  "evaluated_at": "2026-09-03T08:15:00Z",
-  "ruleset_version": "water-v0.2"
+  "assessment": {
+    "status": "available",
+    "context_state": "context_available",
+    "confidence": "medium",
+    "factors": [],
+    "missing_evidence": [],
+    "limitations": [],
+    "action_options": [],
+    "recommendation": {"mode": "alternatives_only", "recommended_option_id": null},
+    "evaluated_at": "2026-09-03T08:15:00Z",
+    "ruleset_version": "water-v0.2"
+  }
 }
 ```
 
 `confidence` adalah ordinal strength-of-basis, bukan probabilitas.
-

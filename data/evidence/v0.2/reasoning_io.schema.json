@@ -39,28 +39,35 @@
     },
     "output": {
       "type": "object",
-      "required": ["status", "context_state", "confidence", "factors", "missing_evidence", "limitations", "action_options", "recommendation", "evaluated_at", "ruleset_version"],
+      "required": ["assessment"],
       "properties": {
-        "status": {"enum": ["available", "insufficient_evidence", "assessment_unavailable"]},
-        "context_state": {"enum": ["context_available", "needs_verification", "conflicting_local_evidence", "insufficient_evidence", "unavailable"]},
-        "confidence": {"enum": ["medium", "low", "unknown"]},
-        "factors": {"type": "array"},
-        "missing_evidence": {"type": "array", "items": {"type": "string"}},
-        "limitations": {"type": "array", "items": {"type": "string"}},
-        "action_options": {"type": "array", "items": {"type": "string"}},
-        "recommendation": {
+        "assessment": {
           "type": "object",
-          "required": ["mode", "recommended_option_id"],
+          "required": ["status", "context_state", "confidence", "factors", "missing_evidence", "limitations", "action_options", "recommendation", "evaluated_at", "ruleset_version"],
           "properties": {
-            "mode": {"enum": ["alternatives_only", "abstained"]},
-            "recommended_option_id": {"type": "null"}
+            "status": {"enum": ["available", "insufficient_evidence", "assessment_unavailable"]},
+            "context_state": {"enum": ["context_available", "needs_verification", "conflicting_local_evidence", "insufficient_evidence", "unavailable"]},
+            "confidence": {"enum": ["medium", "low", "unknown"]},
+            "factors": {"type": "array"},
+            "missing_evidence": {"type": "array", "items": {"type": "string"}},
+            "limitations": {"type": "array", "items": {"type": "string"}},
+            "action_options": {"type": "array", "items": {"type": "string"}},
+            "recommendation": {
+              "type": "object",
+              "required": ["mode", "recommended_option_id"],
+              "properties": {
+                "mode": {"enum": ["alternatives_only", "abstained"]},
+                "recommended_option_id": {"type": "null"}
+              },
+              "additionalProperties": false
+            },
+            "evaluated_at": {"type": "string", "format": "date-time"},
+            "ruleset_version": {"const": "water-v0.2"}
           },
-          "additionalProperties": false
-        },
-        "evaluated_at": {"type": "string", "format": "date-time"},
-        "ruleset_version": {"const": "water-v0.2"}
+          "additionalProperties": true
+        }
       },
-      "additionalProperties": true
+      "additionalProperties": false
     }
   }
 }

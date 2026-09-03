@@ -25,13 +25,14 @@ def main():
         validator.validate(first)
         assert first == second, f"{scenario['id']}: non-deterministic output"
         expected = expected_results[scenario["id"]]
-        assert first["status"] == expected["status"], scenario["id"]
-        assert first["context_state"] == expected["context_state"], scenario["id"]
-        assert first["confidence"] == expected["confidence"], scenario["id"]
-        assert first["recommendation"]["mode"] == expected["recommendation_mode"], scenario["id"]
-        assert first["recommendation"]["recommended_option_id"] is None
+        assessment = first["assessment"]
+        assert assessment["status"] == expected["status"], scenario["id"]
+        assert assessment["context_state"] == expected["context_state"], scenario["id"]
+        assert assessment["confidence"] == expected["confidence"], scenario["id"]
+        assert assessment["recommendation"]["mode"] == expected["recommendation_mode"], scenario["id"]
+        assert assessment["recommendation"]["recommended_option_id"] is None
         if "bmkg_delivery" in expected:
-            assert first["bmkg_delivery"] == expected["bmkg_delivery"]
+            assert assessment["bmkg_delivery"] == expected["bmkg_delivery"]
         print(f"{scenario['id']}: PASS")
     print("6 scenarios passed; same input + evaluation time = same output")
 

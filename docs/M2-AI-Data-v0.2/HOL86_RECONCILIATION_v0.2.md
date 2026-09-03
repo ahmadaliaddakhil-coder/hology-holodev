@@ -21,6 +21,23 @@ DecisionCase 1 ── * Evidence ── * Assessment
 | evidence | Tambah `land_ref`, `decision_case_ref`, `source_record`, `temporal` | Additive/breaking bila required. |
 | revision | Decision Record immutable + `supersedes_id` | Non-breaking additive. |
 
+## Field/semantics v0.1 yang dipertahankan
+
+- Evidence identity, type, source, provenance, location, temporal metadata,
+  quality, dan raw payload separation.
+- Evidence evaluation sebagai derived state.
+- Assessment terpisah dari raw evidence.
+- Factors, missing evidence, limitations, action options, dan recommendation gate.
+- Trusted Review optional dan advisory.
+- Decision Record sebagai immutable human-owned snapshot.
+- Evidence/assessment version references dan no-silent-overwrite invariant.
+
+## Field yang tidak dibawa sebagai live semantic
+
+- Fixture-only `rainfall_category`, total `12.5 mm`, dan `consecutive_dry_days`.
+- Field observation berupa kesimpulan `critical_low`/`dry`; diganti Field Pulse.
+- `trigger` otomatis sebagai syarat pembukaan case; M2 dimulai manual oleh user.
+
 ## Field minimum
 
 ```json
@@ -60,4 +77,3 @@ DecisionCase 1 ── * Evidence ── * Assessment
 4. Map `decision_context_id` to `decision_case_id` while retaining legacy ID in
    `migration.legacy_refs`.
 5. Reject ambiguous land/crop mappings for manual review.
-

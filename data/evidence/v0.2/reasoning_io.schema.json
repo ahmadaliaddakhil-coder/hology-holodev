@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rembuktani.local/schema/reasoning-io-v0.2.json",
+  "title": "RembukTani reasoning input/output v0.2",
+  "oneOf": [
+    {"$ref": "#/$defs/input"},
+    {"$ref": "#/$defs/output"}
+  ],
+  "$defs": {
+    "fieldPulse": {
+      "type": "object",
+      "required": ["water_presence", "irrigation_flow", "observed_at"],
+      "properties": {
+        "water_presence": {"enum": ["present", "limited", "none", "unknown"]},
+        "irrigation_flow": {"enum": ["flowing", "limited", "not_flowing", "unknown"]},
+        "observed_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": true
+    },
+    "input": {
+      "type": "object",
+      "required": ["evaluation_time", "decision_case_started_at", "crop_context", "bmkg", "field_pulse"],
+      "properties": {
+        "evaluation_time": {"type": "string", "format": "date-time"},
+        "decision_case_started_at": {"type": "string", "format": "date-time"},
+        "crop_context": {"type": "object", "required": ["crop"]},
+        "bmkg": {
+          "type": "object",
+          "required": ["available", "cached"],
+          "properties": {
+            "available": {"type": "boolean"},
+            "cached": {"type": "boolean"},
+            "target_times": {"type": "array", "items": {"type": "string", "format": "date-time"}}
+          }
+        },
+        "field_pulse": {"$ref": "#/$defs/fieldPulse"}
+      },
+      "additionalProperties": true
+    },
+    "output": {
+      "type": "object",
+      "required": ["assessment"],
+      "properties": {
+        "assessment": {
+          "type": "object",
+          "required": ["status", "context_state", "confidence", "factors", "missing_evidence", "limitations", "action_options", "recommendation", "evaluated_at", "ruleset_version"],
+          "properties": {
+            "status": {"enum": ["available", "insufficient_evidence", "assessment_unavailable"]},
+            "context_state": {"enum": ["context_available", "needs_verification", "conflicting_local_evidence", "insufficient_evidence", "unavailable"]},
+            "confidence": {"enum": ["medium", "low", "unknown"]},
+            "factors": {"type": "array"},
+            "missing_evidence": {"type": "array", "items": {"type": "string"}},
+            "limitations": {"type": "array", "items": {"type": "string"}},
+            "action_options": {"type": "array", "items": {"type": "string"}},
+            "recommendation": {
+              "type": "object",
+              "required": ["mode", "recommended_option_id"],
+              "properties": {
+                "mode": {"enum": ["alternatives_only", "abstained"]},
+                "recommended_option_id": {"type": "null"}
+              },
+              "additionalProperties": false
+            },
+            "evaluated_at": {"type": "string", "format": "date-time"},
+            "ruleset_version": {"const": "water-v0.2"}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

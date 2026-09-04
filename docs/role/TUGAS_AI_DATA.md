@@ -5,6 +5,97 @@
 
 ---
 
+# 0. Snapshot progres saat ini — 3 September 2026
+
+Snapshot ini menyesuaikan progres repository dengan
+`LAPORAN_KONTEKS_PROYEK_REMBUKTANI_v0.2.md`. Jika ada konflik, laporan konteks
+v0.2 tetap menjadi source of truth yang lebih tinggi.
+
+## Sudah selesai dan dapat digunakan ulang
+
+| Artefak | Status | Catatan |
+|---|---|---|
+| M0 canonical evidence envelope | **Selesai / frozen sebagai v0.1** | Evidence eksternal, observasi lapangan, dan observasi manusia memakai envelope bersama. |
+| Tiga fixture deterministic | **Selesai sebagai mock fixture** | `climate_external`, `field_observation`, dan `human_observation` sudah memiliki provenance dan label mock. |
+| Data dictionary dan limitations M0 | **Selesai untuk scope M0** | Belum menggantikan BMKG data dictionary v0.2. |
+| HOL-86 canonical contract v0.1 | **Selesai sebagai baseline** | Dua canonical example lolos schema dan invariant validation. |
+| HOL-87 transparent reasoning v0.1 | **Selesai sebagai baseline** | Empat skenario semantic test lulus dan output kompatibel dengan HOL-86 v0.1. |
+
+Referensi commit progres AI/Data:
+
+- `e5e99ec` — migrasi fixture ke canonical evidence contract v0.1;
+- `266a07a` — finalisasi evidence contract data dan schema M0.
+
+## Perlu direconcile; belum boleh dianggap output v0.2
+
+- Fixture climate M0 berisi `below_normal`, `12.5 mm`, dan `8 dry days`.
+  Nilai tersebut tetap sah hanya sebagai **mock/test fixture**, bukan field yang
+  diasumsikan berasal dari BMKG Public Forecast API.
+- Input lapangan lama memakai kesimpulan seperti `critical_low` dan `dry`.
+  Field Pulse v0.2 harus memakai observasi sederhana: `present`, `limited`,
+  `none`, atau `unknown`; serta `flowing`, `limited`, `not_flowing`, atau
+  `unknown`.
+- HOL-86 v0.1 mempunyai `decision_context.crop_context`, tetapi belum memisahkan
+  `Land`, `Active Crop Context`, dan `Decision Case` sesuai konsep produk terbaru.
+- HOL-87 v0.1 tetap berguna untuk pola deterministic evaluation, abstention,
+  missing/stale/conflict handling, dan alternatives-only; rule input-nya harus
+  diaudit ulang terhadap payload BMKG aktual.
+
+## Status task v0.2
+
+| Task | Status saat ini | Next output / gate |
+|---|---|---|
+| 1. Audit Actual BMKG Payload | **Draft v0.2 selesai** | Dictionary + live sample excerpt tersedia; review adapter Full-stack masih diperlukan. |
+| 2. Reconcile HOL-86 | **Proposal selesai** | Menunggu review Full-stack sebelum schema final diubah. |
+| 3. Field Pulse Contract | **Draft v0.2 selesai** | Enum dan unknown/completeness semantics sudah ditetapkan. |
+| 4. HOL-87 Reasoning v0.2 | **Draft + reference engine selesai** | Audit keep/modify/remove/replace dan ruleset v0.2 tersedia. |
+| 5. Curated Source Pack v0.2 | **Draft selesai** | Setiap rule diberi source/status/limitation. |
+| 6. BMKG → Canonical Mapping | **Draft selesai** | Perlu dicocokkan dengan bentuk output adapter Full-stack. |
+| 7. Freshness Policy v0.2 | **Draft selesai** | Review cache behavior dengan Full-stack masih menjadi gate. |
+| 8. Deterministic Test Scenarios | **Selesai untuk reference engine** | T1–T6 lulus; integrasi unit test backend belum dikerjakan Full-stack. |
+| 9. Action Options v0.2 | **Draft selesai** | Empat ID bounded/non-prescriptive tanpa ranking tersedia. |
+| 10. Explanation Contract v0.2 | **Draft selesai** | Structured explanation contract tersedia untuk PM/UX dan Full-stack. |
+
+## Urutan kerja yang disarankan
+
+```text
+Task 1 — Audit payload BMKG aktual
+  ↓
+Task 3 — Kunci semantic Field Pulse
+  ↓
+Task 2 — Proposal rekonsiliasi HOL-86 + review Full-stack
+  ↓
+Task 6 dan 7 — Normalization mapping + freshness policy
+  ↓
+Task 4, 5, dan 9 — Reasoning, source pack, action options v0.2
+  ↓
+Task 8 dan 10 — Test scenarios + explanation contract
+```
+
+## Jawaban lima pertanyaan kerja role AI/Data
+
+```text
+Saya membuat apa?
+Contract evidence dan reasoning deterministic v0.2 berbasis BMKG + Crop Context + Field Pulse.
+
+Referensi saya apa?
+Laporan konteks v0.2, payload/dokumentasi resmi BMKG, HOL-86 v0.1,
+HOL-87 v0.1, HOL-88, dan output teknis Full-stack.
+
+Output saya apa?
+Data dictionary, reconciliation proposal, enum Field Pulse, canonical mapping,
+freshness policy, ruleset, fixtures/tests, action options, dan explanation contract.
+
+Output saya dipakai siapa?
+Full-stack untuk schema/API/engine, serta PM/UX untuk evidence display dan copy/template.
+
+Apa yang tidak boleh saya ubah sendiri?
+Semantic contract final sebelum review Full-stack, keputusan produk, final human decision,
+dan threshold/rekomendasi agronomis yang belum mempunyai sumber tervalidasi.
+```
+
+---
+
 # 1. Target role ini
 
 AI/Data harus membuat sistem mampu melakukan:

@@ -1,0 +1,16 @@
+{
+  "evaluation_time": "2026-09-03T08:15:00Z",
+  "decision_case": {"decision_case_id": "CASE-001", "land_id": "LAND-001", "started_at": "2026-09-03T08:00:00Z"},
+  "crop_context": {"crop": "rice", "variety": "Inpari 32", "growth_stage": "flowering"},
+  "bmkg": {
+    "evidence_id": "EVD-BMKG-001",
+    "source": {"category": "official", "name": "BMKG"},
+    "provenance": {"collection_mode": "external_api", "is_mock": false, "fetched_at": "2026-09-03T08:05:00Z"},
+    "location": {"administrative": {"adm4": "31.71.03.1001", "desa": "Kemayoran"}},
+    "payload": {"analysis_time": "2026-09-03T00:00:00Z", "forecast_slots": [
+      {"target_time_utc": "2026-09-03T09:00:00Z", "target_time_local": "2026-09-03 16:00:00", "t": 30, "hu": 57, "weather_desc": "Cerah", "weather_desc_en": "Sunny", "ws": 13.1, "wd": "N", "tcc": 2, "vs_text": "> 10 km"}
+    ]}
+  },
+  "field_pulse": {"evidence_id": "EVD-FIELD-001", "water_presence": "limited", "irrigation_flow": "not_flowing", "observed_at": "2026-09-03T08:10:00Z"}
+}
+

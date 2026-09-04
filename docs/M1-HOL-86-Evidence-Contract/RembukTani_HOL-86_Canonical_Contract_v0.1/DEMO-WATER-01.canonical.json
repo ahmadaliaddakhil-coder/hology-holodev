@@ -1,0 +1,493 @@
+{
+  "contract_version": "0.1.0",
+  "bundle_id": "BND-DEMO-WATER-01",
+  "scenario_id": "DEMO-WATER-01",
+  "environment": "demo",
+  "workflow_state": "decision_recorded",
+  "decision_context": {
+    "decision_context_id": "DC-WATER-001",
+    "version": 1,
+    "status": "decision_recorded",
+    "decision_question": "Apakah rencana terkait kondisi air Blok Tirto A3 perlu ditinjau berdasarkan evidence saat ini?",
+    "trigger": {
+      "type": "manual_review",
+      "description": "Kondisi air hamparan perlu ditinjau pada skenario DEMO-WATER-01.",
+      "detected_by": "demo_fixture"
+    },
+    "location": {
+      "country": "Indonesia",
+      "province": "Jawa Timur",
+      "regency": "Kabupaten Malang",
+      "district": "Kepanjen",
+      "hamparan_name": "Blok Tirto A3",
+      "location_ref": "LOC-TIRTO-A3"
+    },
+    "crop_context": {
+      "crop": "rice",
+      "variety": "Inpari 32",
+      "growth_stage": "flowering",
+      "planting_date": "2026-06-15"
+    },
+    "created_at": "2026-08-31T06:55:00Z",
+    "updated_at": "2026-08-31T07:12:00Z",
+    "is_mock": true,
+    "notes": "Deterministic M1 demo context; not local farmer validation."
+  },
+  "evidence": [
+    {
+      "evidence_id": "EVD-CLM-001",
+      "evidence_version": 1,
+      "evidence_type": "climate_external",
+      "source": {
+        "category": "official_mock",
+        "name": "BMKG"
+      },
+      "provenance": {
+        "collection_mode": "fixture",
+        "is_mock": true
+      },
+      "location": {
+        "province": "Jawa Timur",
+        "regency": "Kabupaten Malang",
+        "district": "Kepanjen"
+      },
+      "observed_at": "2026-08-30T00:00:00Z",
+      "valid_until": "2026-09-06T00:00:00Z",
+      "quality": {
+        "level": "high",
+        "basis": "official_source_mock_fixture"
+      },
+      "payload": {
+        "forecast_horizon_days": 10,
+        "rainfall_category": "below_normal",
+        "forecast_precipitation_total_mm": 12.5,
+        "consecutive_dry_days": 8
+      }
+    },
+    {
+      "evidence_id": "EVD-FLD-001",
+      "evidence_version": 1,
+      "evidence_type": "field_observation",
+      "source": {
+        "category": "group_observation",
+        "name": "Demo Farmer Group"
+      },
+      "provenance": {
+        "collection_mode": "fixture",
+        "is_mock": true
+      },
+      "location": {
+        "province": "Jawa Timur",
+        "regency": "Kabupaten Malang",
+        "district": "Kepanjen",
+        "hamparan_name": "Blok Tirto A3"
+      },
+      "observed_at": "2026-08-30T07:30:00Z",
+      "valid_until": "2026-08-31T07:30:00Z",
+      "quality": {
+        "level": "high",
+        "basis": "direct_field_observation_fixture"
+      },
+      "payload": {
+        "crop": "rice",
+        "variety": "Inpari 32",
+        "growth_stage": "flowering",
+        "planting_date": "2026-06-15",
+        "water_status": "critical_low",
+        "irrigation_status": "dry",
+        "field_observation": {
+          "soil_crack": "shallow",
+          "irrigation_flow_percentage": 20
+        },
+        "notes": "Demo observation"
+      }
+    },
+    {
+      "evidence_id": "EVD-HUM-001",
+      "evidence_version": 1,
+      "evidence_type": "human_observation",
+      "source": {
+        "category": "extension_worker",
+        "name": "PPL"
+      },
+      "provenance": {
+        "collection_mode": "manual",
+        "is_mock": true,
+        "fallback_reason": "external_source_unavailable"
+      },
+      "location": {
+        "province": "Jawa Timur",
+        "regency": "Kabupaten Malang",
+        "district": "Kepanjen"
+      },
+      "observed_at": "2026-08-30T10:00:00Z",
+      "valid_until": "2026-08-31T10:00:00Z",
+      "quality": {
+        "level": "medium",
+        "basis": "manual_extension_worker_observation_fixture"
+      },
+      "payload": {
+        "estimated_rainfall_category": "below_normal",
+        "estimated_water_availability": "critical_low",
+        "observation_basis": "secondary_irrigation_gate_observation"
+      }
+    }
+  ],
+  "assessment": {
+    "assessment_id": "ASM-WATER-001",
+    "version": 1,
+    "decision_context_ref": {
+      "id": "DC-WATER-001",
+      "version": 1
+    },
+    "status": "complete",
+    "evaluated_at": "2026-08-31T07:00:00Z",
+    "reasoning": {
+      "engine_id": "rembuktani-baseline",
+      "engine_version": "0.1.0",
+      "rule_set_version": "prototype-water-0.1",
+      "baseline_status": "prototype_rule"
+    },
+    "context_state": "elevated_attention",
+    "confidence": "medium",
+    "factors": [
+      {
+        "factor_id": "FCT-001",
+        "label": "Forecast curah hujan di bawah normal",
+        "direction": "supports_attention",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-CLM-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "PR-WATER-001"
+      },
+      {
+        "factor_id": "FCT-002",
+        "label": "Periode kering fixture berlanjut",
+        "direction": "supports_attention",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-CLM-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "PR-WATER-001"
+      },
+      {
+        "factor_id": "FCT-003",
+        "label": "Kondisi air lokal fixture critical_low",
+        "direction": "supports_attention",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-FLD-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "PR-WATER-002"
+      },
+      {
+        "factor_id": "FCT-004",
+        "label": "Aliran irigasi fixture rendah",
+        "direction": "supports_attention",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-FLD-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "PR-WATER-002"
+      },
+      {
+        "factor_id": "FCT-005",
+        "label": "Fase tanaman fixture flowering",
+        "direction": "supports_attention",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-FLD-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "PR-WATER-003"
+      }
+    ],
+    "evidence_evaluations": [
+      {
+        "evidence_id": "EVD-CLM-001",
+        "evidence_version": 1,
+        "schema_status": "valid",
+        "freshness_status": "current",
+        "relevance_status": "relevant",
+        "issues": []
+      },
+      {
+        "evidence_id": "EVD-FLD-001",
+        "evidence_version": 1,
+        "schema_status": "valid",
+        "freshness_status": "current",
+        "relevance_status": "relevant",
+        "issues": []
+      },
+      {
+        "evidence_id": "EVD-HUM-001",
+        "evidence_version": 1,
+        "schema_status": "valid",
+        "freshness_status": "current",
+        "relevance_status": "relevant",
+        "issues": []
+      }
+    ],
+    "missing_evidence": [
+      {
+        "code": "LATEST_WATER_ALLOCATION",
+        "description": "Konfirmasi kondisi terbaru sumber/alokasi air sebelum keputusan operasional.",
+        "impact": "material",
+        "requested_evidence_type": "field_observation"
+      }
+    ],
+    "limitations": [
+      "Fixture bersifat simulasi.",
+      "Baseline reasoning belum tervalidasi sebagai model agronomis.",
+      "valid_until pada fixture M0 menggunakan prototype rule, bukan batas riil agronomis."
+    ],
+    "action_option_ids": [
+      "OPT-WATER-001",
+      "OPT-WATER-002",
+      "OPT-WATER-003"
+    ],
+    "recommendation": {
+      "mode": "alternatives_only",
+      "recommended_option_id": null,
+      "why": "Recommended option belum menjadi core mandatory dan evidence material masih perlu dikonfirmasi.",
+      "change_conditions": [
+        "Fresh local water observation tersedia.",
+        "Reasoning baseline untuk ranking disetujui."
+      ]
+    },
+    "input_evidence_refs": [
+      {
+        "id": "EVD-CLM-001",
+        "version": 1
+      },
+      {
+        "id": "EVD-FLD-001",
+        "version": 1
+      },
+      {
+        "id": "EVD-HUM-001",
+        "version": 1
+      }
+    ]
+  },
+  "action_options": [
+    {
+      "option_id": "OPT-WATER-001",
+      "decision_context_ref": {
+        "id": "DC-WATER-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-WATER-001",
+        "version": 1
+      },
+      "origin": "system_baseline",
+      "option_type": "action",
+      "label": "Verifikasi dan siapkan penyesuaian",
+      "description": "Verifikasi kondisi air terkini dan siapkan penyesuaian rencana bila kondisi kritis terkonfirmasi.",
+      "rationale": "Fixture menunjukkan beberapa faktor yang meningkatkan perhatian, tetapi kondisi/alokasi air terbaru masih perlu dikonfirmasi.",
+      "supporting_evidence_refs": [
+        {
+          "id": "EVD-CLM-001",
+          "version": 1
+        },
+        {
+          "id": "EVD-FLD-001",
+          "version": 1
+        }
+      ],
+      "limitations": [
+        "Demo-only bounded option; bukan prescription agronomis tervalidasi."
+      ],
+      "required_evidence": [
+        {
+          "code": "LATEST_WATER_ALLOCATION",
+          "description": "Konfirmasi kondisi/alokasi air terbaru sebelum keputusan operasional.",
+          "impact": "material",
+          "requested_evidence_type": "field_observation"
+        }
+      ],
+      "eligibility": "conditional",
+      "rank": null
+    },
+    {
+      "option_id": "OPT-WATER-002",
+      "decision_context_ref": {
+        "id": "DC-WATER-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-WATER-001",
+        "version": 1
+      },
+      "origin": "system_baseline",
+      "option_type": "collect_more_evidence",
+      "label": "Tambah evidence sebelum mengubah rencana",
+      "description": "Pertahankan rencana sementara sambil meminta observasi lapangan terbaru sebelum menetapkan perubahan.",
+      "rationale": "Masih terdapat evidence material yang belum dikonfirmasi.",
+      "supporting_evidence_refs": [
+        {
+          "id": "EVD-CLM-001",
+          "version": 1
+        },
+        {
+          "id": "EVD-FLD-001",
+          "version": 1
+        },
+        {
+          "id": "EVD-HUM-001",
+          "version": 1
+        }
+      ],
+      "limitations": [
+        "Tidak menilai consequence agronomis dari menunda tindakan."
+      ],
+      "required_evidence": [
+        {
+          "code": "LATEST_WATER_ALLOCATION",
+          "description": "Konfirmasi kondisi/alokasi air terbaru.",
+          "impact": "material",
+          "requested_evidence_type": "field_observation"
+        }
+      ],
+      "eligibility": "eligible",
+      "rank": null
+    },
+    {
+      "option_id": "OPT-WATER-003",
+      "decision_context_ref": {
+        "id": "DC-WATER-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-WATER-001",
+        "version": 1
+      },
+      "origin": "system_baseline",
+      "option_type": "request_review",
+      "label": "Minta trusted review",
+      "description": "Minta pertimbangan reviewer tepercaya untuk menilai kondisi dan trade-off sebelum final decision.",
+      "rationale": "Human judgement dapat digunakan ketika uncertainty material masih ada.",
+      "supporting_evidence_refs": [
+        {
+          "id": "EVD-CLM-001",
+          "version": 1
+        },
+        {
+          "id": "EVD-FLD-001",
+          "version": 1
+        },
+        {
+          "id": "EVD-HUM-001",
+          "version": 1
+        }
+      ],
+      "limitations": [
+        "Reviewer tidak otomatis menjadi final decision owner."
+      ],
+      "required_evidence": [],
+      "eligibility": "eligible",
+      "rank": null
+    }
+  ],
+  "trusted_reviews": [
+    {
+      "review_id": "REV-WATER-001",
+      "decision_context_ref": {
+        "id": "DC-WATER-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-WATER-001",
+        "version": 1
+      },
+      "reviewer": {
+        "role": "trusted_reviewer",
+        "display_name": "Bu Sari (PPL fixture)"
+      },
+      "status": "modified",
+      "reviewed_at": "2026-08-31T07:05:00Z",
+      "target_option_id": "OPT-WATER-003",
+      "note": "Pastikan kondisi sumber/alokasi air terbaru dikonfirmasi sebelum perubahan rencana ditetapkan.",
+      "modification": {
+        "description": "Tambahkan verifikasi kondisi/alokasi air sebagai langkah sebelum perubahan rencana.",
+        "reason": "Evidence terbaru mengenai sumber/alokasi air belum tersedia."
+      }
+    }
+  ],
+  "decision_record": {
+    "decision_record_id": "DEC-WATER-001",
+    "revision": 1,
+    "decision_context_ref": {
+      "id": "DC-WATER-001",
+      "version": 1
+    },
+    "status": "recorded",
+    "decided_at": "2026-08-31T07:10:00Z",
+    "authority": "human",
+    "decision_facilitator": {
+      "role": "decision_facilitator",
+      "display_name": "Pak Arif (demo)"
+    },
+    "final_decision": "Lakukan verifikasi kondisi/alokasi air terbaru Blok Tirto A3. Setelah verifikasi, pengurus menetapkan apakah rencana terkait air perlu disesuaikan.",
+    "rationale": "Keputusan mempertimbangkan assessment prototype, evidence yang tersedia, dan catatan trusted reviewer sambil mengakui evidence air terbaru masih diperlukan.",
+    "selected_option_id": "OPT-WATER-001",
+    "considered_option_ids": [
+      "OPT-WATER-001",
+      "OPT-WATER-002",
+      "OPT-WATER-003"
+    ],
+    "system_recommended_option_id": null,
+    "decision_relation_to_system": "no_recommendation",
+    "evidence_snapshot_refs": [
+      {
+        "id": "EVD-CLM-001",
+        "version": 1
+      },
+      {
+        "id": "EVD-FLD-001",
+        "version": 1
+      },
+      {
+        "id": "EVD-HUM-001",
+        "version": 1
+      }
+    ],
+    "assessment_snapshot_ref": {
+      "id": "ASM-WATER-001",
+      "version": 1
+    },
+    "review_snapshot_ref": {
+      "review_id": "REV-WATER-001"
+    },
+    "review_status": "modified",
+    "limitations": [
+      "Data MOCK/DEMO.",
+      "Bukan keputusan pertanian nyata.",
+      "Baseline reasoning belum tervalidasi secara agronomis."
+    ],
+    "is_mock": true,
+    "supersedes_record_id": null,
+    "created_at": "2026-08-31T07:10:05Z"
+  },
+  "handoff": {
+    "handoff_id": "HND-WATER-001",
+    "decision_record_id": "DEC-WATER-001",
+    "channel": "copy_summary",
+    "status": "prepared",
+    "responsible_role": "pengurus/petugas relevan",
+    "execution_window": "hari ini",
+    "action_status": "belum_dikonfirmasi",
+    "outcome_note": "belum tersedia"
+  }
+}

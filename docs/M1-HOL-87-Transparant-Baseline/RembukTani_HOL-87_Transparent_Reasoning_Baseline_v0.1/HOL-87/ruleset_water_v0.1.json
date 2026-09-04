@@ -1,0 +1,126 @@
+{
+  "rule_set_id": "rembuktani-water-baseline",
+  "version": "0.1.0",
+  "status": "prototype_with_curated_qualitative_rules",
+  "ranked_recommendation_enabled": false,
+  "confidence_policy": {
+    "high_enabled": false,
+    "high_disabled_reason": "M1 baseline belum memiliki locally validated/calibrated agronomic model.",
+    "complete_without_material_conflict": "medium",
+    "blocking_missing_or_stale_required_evidence": "low",
+    "material_conflict": "low",
+    "engine_unavailable": "unknown"
+  },
+  "minimum_evidence_policy": {
+    "policy_id": "POL-MIN-001",
+    "status": "system_policy",
+    "required_for_complete_assessment": [
+      {
+        "evidence_type": "climate_external",
+        "must_be": [
+          "schema_valid",
+          "current",
+          "relevant"
+        ]
+      },
+      {
+        "evidence_type": "field_observation",
+        "must_be": [
+          "schema_valid",
+          "current",
+          "relevant"
+        ],
+        "required_payload_any": [
+          "water_status",
+          "irrigation_status"
+        ]
+      }
+    ],
+    "human_observation_required": false,
+    "basis": "M1 core product requires external intelligence + local field context; product/safety policy, not universal agronomic law."
+  },
+  "freshness_policy": {
+    "policy_id": "POL-FRESH-001",
+    "status": "system_policy",
+    "logic": "current if evaluated_at <= valid_until; stale if evaluated_at > valid_until; unknown if valid_until missing",
+    "note": "HOL-87 consumes valid_until; it does not define scientific freshness duration."
+  },
+  "relevance_policy": {
+    "policy_id": "POL-REL-001",
+    "status": "system_policy",
+    "logic": [
+      "district mismatch -> not_relevant",
+      "field_observation with hamparan_name mismatch -> not_relevant",
+      "otherwise relevant for M1 bounded demo"
+    ]
+  },
+  "domain_rules": [
+    {
+      "rule_id": "PR-CLIMATE-001",
+      "status": "prototype_rule",
+      "when": "climate_external.payload.rainfall_category == 'below_normal'",
+      "effect": "add dry-climate-context factor",
+      "reason": "Fixture/upstream category is used as contextual signal; no probability or drought threshold is inferred."
+    },
+    {
+      "rule_id": "PR-FIELD-001",
+      "status": "prototype_rule",
+      "when": "field_observation.payload.water_status in low labels OR irrigation_status == 'dry'",
+      "effect": "add local-water-shortage factor",
+      "reason": "Fixture taxonomy is not scientifically calibrated."
+    },
+    {
+      "rule_id": "CR-STAGE-001",
+      "status": "curated_rule",
+      "when": "growth_stage == 'flowering' AND local-water-shortage factor exists",
+      "effect": "add flowering water-sensitivity attention modifier",
+      "source_ids": [
+        "S1",
+        "S2",
+        "S3"
+      ],
+      "reason": "IRRI guidance and drought literature support heightened sensitivity around flowering; no prescription derived."
+    },
+    {
+      "rule_id": "PR-COMBINE-001",
+      "status": "prototype_rule",
+      "when": "dry-climate-context factor AND local-water-shortage factor",
+      "effect": "context_state = elevated_attention",
+      "reason": "Combination logic is deterministic M1 prototype, not validated probability model."
+    },
+    {
+      "rule_id": "POL-VERIFY-001",
+      "status": "system_policy",
+      "when": "context_state == elevated_attention AND field water shortage exists",
+      "effect": "request latest water source/allocation confirmation as material evidence",
+      "reason": "Safety-oriented demo policy before operational change; not agronomic prescription."
+    }
+  ],
+  "conflict_policy": {
+    "policy_id": "POL-CONFLICT-001",
+    "status": "prototype_rule",
+    "detect_only_direct_water_status_conflict": true,
+    "low_labels": [
+      "critical_low",
+      "very_low",
+      "low",
+      "dry"
+    ],
+    "adequate_labels": [
+      "adequate",
+      "normal",
+      "sufficient",
+      "good",
+      "high"
+    ],
+    "important_non_conflict": "regional rainfall signal and local water status may legitimately differ; do not mark that alone as conflict."
+  },
+  "recommendation_policy": {
+    "policy_id": "POL-RECO-001",
+    "status": "system_policy",
+    "insufficient_evidence": "abstained",
+    "complete": "alternatives_only",
+    "conflicting_evidence": "alternatives_only",
+    "ranked": "disabled in v0.1"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "T1_NORMAL": {"status": "available", "context_state": "context_available", "confidence": "medium", "recommendation_mode": "alternatives_only"},
+  "T2_FIELD_PULSE_UNKNOWN": {"status": "available", "context_state": "needs_verification", "confidence": "low", "recommendation_mode": "alternatives_only"},
+  "T3_BMKG_UNAVAILABLE": {"status": "insufficient_evidence", "context_state": "insufficient_evidence", "confidence": "low", "recommendation_mode": "abstained"},
+  "T4_CACHED_BMKG": {"status": "available", "context_state": "context_available", "confidence": "medium", "recommendation_mode": "alternatives_only", "bmkg_delivery": "cached"},
+  "T5_CONFLICTING_LOCAL_OBSERVATION": {"status": "available", "context_state": "conflicting_local_evidence", "confidence": "low", "recommendation_mode": "alternatives_only"},
+  "T6_REASONING_FAILURE": {"status": "assessment_unavailable", "context_state": "unavailable", "confidence": "unknown", "recommendation_mode": "abstained"}
+}
+

@@ -1,0 +1,29 @@
+{
+  "evidence_id": "EVD-HUM-001",
+  "evidence_type": "human_observation",
+  "source": {
+    "category": "extension_worker",
+    "name": "PPL"
+  },
+  "provenance": {
+    "collection_mode": "manual",
+    "is_mock": true,
+    "fallback_reason": "external_source_unavailable"
+  },
+  "location": {
+    "province": "Jawa Timur",
+    "regency": "Kabupaten Malang",
+    "district": "Kepanjen"
+  },
+  "observed_at": "2026-08-30T10:00:00Z",
+  "valid_until": "2026-08-31T10:00:00Z",
+  "quality": {
+    "level": "medium",
+    "basis": "manual_extension_worker_observation_fixture"
+  },
+  "payload": {
+    "estimated_rainfall_category": "below_normal",
+    "estimated_water_availability": "critical_low",
+    "observation_basis": "secondary_irrigation_gate_observation"
+  }
+}

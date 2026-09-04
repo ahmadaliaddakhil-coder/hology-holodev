@@ -1,0 +1,56 @@
+{
+  "sample_metadata": {
+    "captured_on": "2026-09-03",
+    "endpoint": "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=31.71.03.1001",
+    "is_excerpt": true,
+    "purpose": "Schema audit only; forecast values expire and must not be used as current evidence."
+  },
+  "lokasi": {
+    "adm1": "31",
+    "adm2": "31.71",
+    "adm3": "31.71.03",
+    "adm4": "31.71.03.1001",
+    "provinsi": "DKI Jakarta",
+    "kotkab": "Kota Adm. Jakarta Pusat",
+    "kecamatan": "Kemayoran",
+    "desa": "Kemayoran",
+    "lon": 106.8453837867,
+    "lat": -6.1647214778,
+    "timezone": "Asia/Jakarta"
+  },
+  "data": [
+    {
+      "lokasi": {
+        "adm4": "31.71.03.1001",
+        "timezone": "+0700",
+        "type": "adm4"
+      },
+      "cuaca": [
+        [
+          {
+            "datetime": "2026-09-03T03:00:00Z",
+            "t": 32,
+            "tcc": 8,
+            "tp": 0,
+            "weather": 0,
+            "weather_desc": "Cerah",
+            "weather_desc_en": "Sunny",
+            "wd_deg": 78,
+            "wd": "NE",
+            "wd_to": "SW",
+            "ws": 4.8,
+            "hu": 48,
+            "vs": 14112,
+            "vs_text": "> 10 km",
+            "time_index": "2-3",
+            "analysis_date": "2026-09-03T00:00:00",
+            "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/cerah-am.svg",
+            "utc_datetime": "2026-09-03 03:00:00",
+            "local_datetime": "2026-09-03 10:00:00"
+          }
+        ]
+      ]
+    }
+  ]
+}
+

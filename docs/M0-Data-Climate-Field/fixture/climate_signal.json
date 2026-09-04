@@ -1,0 +1,29 @@
+{
+  "evidence_id": "EVD-CLM-001",
+  "evidence_type": "climate_external",
+  "source": {
+    "category": "official_mock",
+    "name": "BMKG"
+  },
+  "provenance": {
+    "collection_mode": "fixture",
+    "is_mock": true
+  },
+  "location": {
+    "province": "Jawa Timur",
+    "regency": "Kabupaten Malang",
+    "district": "Kepanjen"
+  },
+  "observed_at": "2026-08-30T00:00:00Z",
+  "valid_until": "2026-09-06T00:00:00Z",
+  "quality": {
+    "level": "high",
+    "basis": "official_source_mock_fixture"
+  },
+  "payload": {
+    "forecast_horizon_days": 10,
+    "rainfall_category": "below_normal",
+    "forecast_precipitation_total_mm": 12.5,
+    "consecutive_dry_days": 8
+  }
+}

@@ -1,0 +1,8 @@
+class_id,class,examples,sensitivity,minimum_metadata,m1_handling
+D0,External/Public Evidence,Climate/agricultural evidence from public/official sources,Low/Public,"Source, provenance, observed/valid time",Preserve provenance; cache only as needed; source terms apply
+D1,Synthetic Demo,"Deterministic fixtures, demo actors",Low but safety-labeled,MOCK/DEMO marker,Versioned; never silently substitute for real evidence
+D2,Operational Field Data,"Field Pulse, hamparan/crop/water observations",Restricted operational,Scoped context + timestamps,Collect minimum necessary; exact real-pilot retention TBD
+D3,Decision/Review Data,"Assessment, options, review, Decision Record",Restricted operational,Version/revision + audit refs,No silent overwrite; access by relevant role
+D4,Personal/Role Data,"Role, optional display_name / actor_id",Restricted personal-minimal,"Role required, identity optional",Minimize; avoid real names if not needed
+D5,Secrets/Auth,"API keys, auth tokens, DB credentials",Secret,Never canonical/domain payload,Secret store/env only; never logs/repo
+D6,Not Needed M1,"NIK, OTP, password, bank/account, irrelevant financial data",Do not collect,N/A,Explicitly outside HOL-86/M1 need

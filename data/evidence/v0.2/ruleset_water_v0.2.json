@@ -1,0 +1,26 @@
+{
+  "ruleset_id": "water-v0.2",
+  "deterministic": true,
+  "ranked_recommendation_enabled": false,
+  "required_inputs": ["bmkg_forecast", "crop_context", "field_pulse"],
+  "confidence_policy": {
+    "complete_current_basis": "medium",
+    "partial_or_unknown_field_pulse": "low",
+    "missing_or_unavailable_required_input": "low",
+    "high_enabled": false
+  },
+  "states": {
+    "complete": "context_available",
+    "partial": "needs_verification",
+    "insufficient": "insufficient_evidence",
+    "failure": "assessment_unavailable"
+  },
+  "prohibited_inferences": [
+    "weather_description_to_local_water_state",
+    "temperature_or_humidity_to_agronomic_risk",
+    "mock_below_normal_as_live_bmkg_field",
+    "numeric_risk_score",
+    "ranked_action"
+  ]
+}
+

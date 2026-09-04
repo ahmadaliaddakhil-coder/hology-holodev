@@ -1,0 +1,206 @@
+{
+  "contract_version": "0.1.0",
+  "bundle_id": "BND-DEMO-WATER-FALLBACK-01",
+  "scenario_id": "DEMO-WATER-FALLBACK-01",
+  "environment": "demo",
+  "workflow_state": "insufficient_evidence",
+  "decision_context": {
+    "decision_context_id": "DC-WATER-FB-001",
+    "version": 1,
+    "status": "active",
+    "decision_question": "Apakah evidence saat ini cukup untuk menilai ulang kondisi air Blok Tirto A3?",
+    "trigger": {
+      "type": "manual_review",
+      "description": "Kondisi air hamparan perlu ditinjau pada skenario DEMO-WATER-01.",
+      "detected_by": "demo_fixture"
+    },
+    "location": {
+      "country": "Indonesia",
+      "province": "Jawa Timur",
+      "regency": "Kabupaten Malang",
+      "district": "Kepanjen",
+      "hamparan_name": "Blok Tirto A3",
+      "location_ref": "LOC-TIRTO-A3"
+    },
+    "crop_context": {
+      "crop": "rice",
+      "variety": "Inpari 32",
+      "growth_stage": "flowering",
+      "planting_date": "2026-06-15"
+    },
+    "created_at": "2026-08-31T06:55:00Z",
+    "updated_at": "2026-08-31T07:00:00Z",
+    "is_mock": true,
+    "notes": "Deterministic M1 demo context; not local farmer validation."
+  },
+  "evidence": [
+    {
+      "evidence_id": "EVD-CLM-FB-001",
+      "evidence_version": 1,
+      "evidence_type": "climate_external",
+      "source": {
+        "category": "official_mock",
+        "name": "BMKG"
+      },
+      "provenance": {
+        "collection_mode": "fixture",
+        "is_mock": true
+      },
+      "location": {
+        "province": "Jawa Timur",
+        "regency": "Kabupaten Malang",
+        "district": "Kepanjen"
+      },
+      "observed_at": "2026-08-30T00:00:00Z",
+      "valid_until": "2026-09-06T00:00:00Z",
+      "quality": {
+        "level": "high",
+        "basis": "official_source_mock_fixture"
+      },
+      "payload": {
+        "forecast_horizon_days": 10,
+        "rainfall_category": "below_normal",
+        "forecast_precipitation_total_mm": 12.5,
+        "consecutive_dry_days": 8
+      }
+    }
+  ],
+  "assessment": {
+    "assessment_id": "ASM-DEMO-WATER-FALLBACK-01",
+    "version": 1,
+    "decision_context_ref": {
+      "id": "DC-WATER-FB-001",
+      "version": 1
+    },
+    "status": "insufficient_evidence",
+    "evaluated_at": "2026-08-31T07:00:00Z",
+    "reasoning": {
+      "engine_id": "rembuktani-baseline",
+      "engine_version": "0.1.0",
+      "rule_set_version": "water-baseline-0.1",
+      "baseline_status": "prototype_rule"
+    },
+    "context_state": "insufficient_evidence",
+    "confidence": "low",
+    "factors": [
+      {
+        "factor_id": "FCT-GATE-001",
+        "label": "Evidence minimum untuk assessment kontekstual belum lengkap.",
+        "direction": "unknown",
+        "linked_evidence_refs": [
+          {
+            "id": "EVD-CLM-FB-001",
+            "version": 1
+          }
+        ],
+        "rule_id": "POL-MIN-001"
+      }
+    ],
+    "evidence_evaluations": [
+      {
+        "evidence_id": "EVD-CLM-FB-001",
+        "evidence_version": 1,
+        "schema_status": "valid",
+        "freshness_status": "current",
+        "relevance_status": "relevant",
+        "issues": []
+      }
+    ],
+    "missing_evidence": [
+      {
+        "code": "FRESH_LOCAL_WATER_OBSERVATION",
+        "description": "Fresh local water observation.",
+        "impact": "blocking",
+        "requested_evidence_type": "field_observation"
+      }
+    ],
+    "limitations": [
+      "M1 reasoning baseline; bukan validated agronomic model.",
+      "Confidence bersifat categorical product semantics, bukan probability."
+    ],
+    "action_option_ids": [
+      "OPT-DEMO-WATER-FALLBACK-01-COLLECT",
+      "OPT-DEMO-WATER-FALLBACK-01-REVIEW"
+    ],
+    "recommendation": {
+      "mode": "abstained",
+      "recommended_option_id": null,
+      "why": "Blocking evidence belum tersedia/current.",
+      "change_conditions": [
+        "Fresh local water observation."
+      ]
+    },
+    "input_evidence_refs": [
+      {
+        "id": "EVD-CLM-FB-001",
+        "version": 1
+      }
+    ]
+  },
+  "action_options": [
+    {
+      "option_id": "OPT-DEMO-WATER-FALLBACK-01-COLLECT",
+      "decision_context_ref": {
+        "id": "DC-WATER-FB-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-DEMO-WATER-FALLBACK-01",
+        "version": 1
+      },
+      "origin": "system_baseline",
+      "option_type": "collect_more_evidence",
+      "label": "Perbarui Field Pulse",
+      "description": "Tambahkan observasi kondisi air lokal yang masih current.",
+      "rationale": "Local field evidence diperlukan untuk contextual assessment M1.",
+      "supporting_evidence_refs": [
+        {
+          "id": "EVD-CLM-FB-001",
+          "version": 1
+        }
+      ],
+      "limitations": [],
+      "required_evidence": [
+        {
+          "code": "FRESH_LOCAL_WATER_OBSERVATION",
+          "description": "Fresh local water observation.",
+          "impact": "blocking",
+          "requested_evidence_type": "field_observation"
+        }
+      ],
+      "eligibility": "eligible",
+      "rank": null
+    },
+    {
+      "option_id": "OPT-DEMO-WATER-FALLBACK-01-REVIEW",
+      "decision_context_ref": {
+        "id": "DC-WATER-FB-001",
+        "version": 1
+      },
+      "assessment_ref": {
+        "id": "ASM-DEMO-WATER-FALLBACK-01",
+        "version": 1
+      },
+      "origin": "system_baseline",
+      "option_type": "request_review",
+      "label": "Minta observasi/review pihak tepercaya",
+      "description": "Gunakan trusted reviewer sebagai jalur tambahan bila keputusan tidak dapat ditunda.",
+      "rationale": "Sistem abstain karena evidence minimum belum lengkap.",
+      "supporting_evidence_refs": [
+        {
+          "id": "EVD-CLM-FB-001",
+          "version": 1
+        }
+      ],
+      "limitations": [
+        "Trusted review tidak otomatis menggantikan blocking evidence."
+      ],
+      "required_evidence": [],
+      "eligibility": "eligible",
+      "rank": null
+    }
+  ],
+  "trusted_reviews": [],
+  "decision_record": null,
+  "handoff": null
+}

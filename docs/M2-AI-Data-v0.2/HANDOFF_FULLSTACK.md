@@ -7,7 +7,8 @@
 - Field Pulse enum + unknown semantics;
 - proposal `Land → CropContext → DecisionCase`;
 - source freshness states;
-- deterministic ruleset dan T1–T6 expectations;
+- deterministic ruleset dan T1–T8 expectations;
+- supplemental T7 stale-cache dan T8 Field Pulse confirmation scenarios;
 - stable action option IDs;
 - explanation fields untuk UI/Decision Brief.
 
@@ -38,3 +39,11 @@
 - Tidak ada ranking, numeric risk score, atau final decision otomatis.
 - Decision Record menyimpan snapshot/references dan tidak silent overwrite.
 
+## Commands sebelum integrasi
+
+```text
+python data/evidence/v0.2/validate_contract_pack_v0_2.py
+python data/evidence/v0.2/test_reasoning_v0_2.py
+```
+
+Keduanya harus PASS sebelum backend mengganti projection/schema.

@@ -44,6 +44,14 @@ def assess(payload):
         usable_targets = [instant(t) for t in target_times if instant(t) >= now]
         bmkg_current = bool(bmkg.get("available") and usable_targets)
         base["bmkg_delivery"] = "cached" if bmkg.get("cached") else "live"
+        base["bmkg_freshness"] = (
+            "current" if bmkg_current else "stale" if bmkg.get("available") and target_times else "unavailable"
+        )
+        if bmkg.get("available") and bmkg.get("analysis_time"):
+            analysis_time = instant(bmkg["analysis_time"])
+            fetched_at = instant(bmkg["fetched_at"]) if bmkg.get("fetched_at") else None
+            if analysis_time > now or (fetched_at and analysis_time > fetched_at):
+                raise ValueError("invalid BMKG temporal ordering")
         if not bmkg_current:
             base["missing_evidence"].append("current_bmkg_forecast")
         else:
@@ -59,10 +67,14 @@ def assess(payload):
         if not field_valid:
             base["missing_evidence"].append("field_pulse")
             water = flow = None
+            base["field_pulse_freshness"] = "unavailable"
         else:
             started = instant(payload["decision_case_started_at"])
             if instant(field["observed_at"]) < started:
                 base["missing_evidence"].append("field_pulse_confirmation")
+                base["field_pulse_freshness"] = "needs_confirmation"
+            else:
+                base["field_pulse_freshness"] = "current_for_case"
             base["factors"].extend([
                 {"code": "field_water_observed", "value": water},
                 {"code": "irrigation_flow_observed", "value": flow},

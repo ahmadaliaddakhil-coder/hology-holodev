@@ -12,7 +12,9 @@ T3_BMKG_UNAVAILABLE: PASS
 T4_CACHED_BMKG: PASS
 T5_CONFLICTING_LOCAL_OBSERVATION: PASS
 T6_REASONING_FAILURE: PASS
-6 scenarios passed; same input + evaluation time = same output
+T7_CACHED_BMKG_STALE: PASS
+T8_FIELD_PULSE_NEEDS_CONFIRMATION: PASS
+8 scenarios passed; same input + evaluation time = same output
 ```
 
 Seluruh JSON pada `data/evidence/v0.2/` juga berhasil diparse dan input/output
@@ -24,3 +26,7 @@ setiap skenario lolos JSON Schema draft 2020-12. Test memastikan:
 - missing BMKG menyebabkan abstention;
 - unknown Field Pulse tetap valid tetapi meminta verifikasi;
 - reasoning failure tidak menghasilkan assessment palsu.
+
+Contract-pack validation juga memastikan canonical BMKG example lolos schema,
+urutan timestamp valid, option ID unik, scenario/expected result 8/8 lengkap,
+serta safety flags ruleset tetap terkunci.

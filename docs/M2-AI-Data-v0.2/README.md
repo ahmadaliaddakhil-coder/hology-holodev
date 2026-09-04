@@ -28,6 +28,13 @@ Artefak executable berada di `data/evidence/v0.2/`.
 Evidence Service. Input engine memakai projection ringkas dari object tersebut;
 projection ini tidak mengubah atau menghapus raw evidence tersimpan.
 
+Backend dapat memulai dengan dua pemeriksaan kontrak:
+
+```text
+python data/evidence/v0.2/validate_contract_pack_v0_2.py
+python data/evidence/v0.2/test_reasoning_v0_2.py
+```
+
 ## Boundary
 
 - BMKG forecast adalah external evidence, bukan kondisi air aktual lahan.

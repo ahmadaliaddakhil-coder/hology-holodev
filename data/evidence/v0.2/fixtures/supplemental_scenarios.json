@@ -1,0 +1,22 @@
+[
+  {
+    "id": "T7_CACHED_BMKG_STALE",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": true, "cached": true, "analysis_time": "2026-09-02T12:00:00Z", "fetched_at": "2026-09-02T12:05:00Z", "target_times": ["2026-09-03T06:00:00Z"]},
+      "field_pulse": {"water_presence": "limited", "irrigation_flow": "limited", "observed_at": "2026-09-03T08:10:00Z"}
+    }
+  },
+  {
+    "id": "T8_FIELD_PULSE_NEEDS_CONFIRMATION",
+    "input": {
+      "evaluation_time": "2026-09-03T08:15:00Z",
+      "decision_case_started_at": "2026-09-03T08:00:00Z",
+      "crop_context": {"crop": "rice"},
+      "bmkg": {"available": true, "cached": false, "analysis_time": "2026-09-03T00:00:00Z", "fetched_at": "2026-09-03T08:05:00Z", "target_times": ["2026-09-03T09:00:00Z"]},
+      "field_pulse": {"water_presence": "present", "irrigation_flow": "flowing", "observed_at": "2026-09-03T07:00:00Z"}
+    }
+  }
+]

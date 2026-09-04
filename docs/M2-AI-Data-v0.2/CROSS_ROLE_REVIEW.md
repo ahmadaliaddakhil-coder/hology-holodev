@@ -9,7 +9,7 @@
 | Field Pulse enums | Field Pulse contract | Ready for joint lock |
 | reasoning/failure semantics | baseline, ruleset, reference engine | Executable |
 | action option IDs | JSON + documentation | Stable draft |
-| fixtures/expected output | T1–T6 + separate expected results | Tests pass |
+| fixtures/expected output | T1–T8 + separate expected results | Tests pass |
 | cache/freshness | freshness policy | Needs implementation review |
 | Land/Crop/Case | HOL-86 reconciliation proposal | Needs ERD review |
 
@@ -34,4 +34,3 @@ tetapi belum boleh disebut contract final lintas sistem sebelum:
 
 AI/Data tidak mengambil alih implementation task, product decision, atau final
 UI copy milik role lain.
-

@@ -30,3 +30,17 @@ setiap skenario lolos JSON Schema draft 2020-12. Test memastikan:
 Contract-pack validation juga memastikan canonical BMKG example lolos schema,
 urutan timestamp valid, option ID unik, scenario/expected result 8/8 lengkap,
 serta safety flags ruleset tetap terkunci.
+
+## Additive quality gates
+
+Command:
+
+```text
+python data/evidence/v0.2/test_contract_quality_gates_v0_2.py
+```
+
+Result: **12/12 PASS**. Sepuluh invalid contract inputs ditolak schema dan dua
+pelanggaran urutan waktu BMKG menghasilkan safe abstention
+(`assessment_unavailable`) tanpa action option atau rekomendasi palsu. Suite ini
+tidak mengubah semantic contract dan aman dikerjakan paralel selama review
+Full-stack/PM.

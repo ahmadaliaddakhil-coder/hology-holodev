@@ -21,6 +21,8 @@ lahan dan BMKG Public Forecast API aktual.
 - `CROSS_ROLE_REVIEW.md`
 - `HANDOFF_FULLSTACK.md`
 - `TEST_REPORT.md`
+- `AI_DATA_COMPLETION_MATRIX.md`
+- `PARALLEL_WORK_NOTE.md`
 
 Artefak executable berada di `data/evidence/v0.2/`.
 
@@ -33,6 +35,7 @@ Backend dapat memulai dengan dua pemeriksaan kontrak:
 ```text
 python data/evidence/v0.2/validate_contract_pack_v0_2.py
 python data/evidence/v0.2/test_reasoning_v0_2.py
+python data/evidence/v0.2/test_contract_quality_gates_v0_2.py
 ```
 
 ## Boundary

@@ -1,0 +1,57 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Bell,
+  Check,
+  Crosshair,
+  Database,
+  FileSearch,
+  Leaf,
+  Map,
+  Menu,
+  Search,
+  Settings,
+  Sprout,
+  UserCircle2,
+  Warehouse,
+  X,
+  CloudSun,
+} from "lucide-react";
+
+type LocationMethod = "satellite" | "device" | "village";
+
+const methods: Array<{ id: LocationMethod; title: string; description: string; icon: typeof Map }> = [
+  { id: "satellite", title: "Pilih Titik di Peta Satelit Interaktif", description: "Arahkan pin langsung ke galengan atau hamparan sawah Anda di peta desa.", icon: Map },
+  { id: "device", title: "Gunakan Lokasi Ponsel / Perangkat Saat Ini", description: "Sistem membaca sensor GPS saat Anda berada langsung di pematang sawah.", icon: Crosshair },
+  { id: "village", title: "Cari Berdasarkan Nama Desa / Kelurahan", description: "Ketik nama desa atau kecamatan untuk memilih wilayah hamparan.", icon: Search },
+];
+
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return <aside className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col justify-between bg-[#fafaf6] p-5 shadow-[0_1px_4px_rgba(21,36,10,0.05)] transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+    <div><div className="mb-6 flex items-center justify-between px-2"><div className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white"><Leaf size={15} className="text-[#85c254]" /> REMBUKTANI</div><button className="md:hidden" onClick={onClose} aria-label="Tutup menu"><X size={20} /></button></div><a href="/farmer/lands" className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#85c254] px-4 py-3 text-sm font-semibold text-[#15240a] shadow-sm hover:bg-[#98cf6a]"><span className="text-lg leading-none">+</span> Tambah Lahan</a><nav className="space-y-1"><a href="/farmer/dashboard" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><Warehouse size={18} /> Beranda</a><a href="/farmer/lands" className="flex w-full items-center gap-3 rounded-xl bg-[#213014] px-4 py-3 font-display text-sm font-bold text-white"><Sprout size={18} /> Lahan</a><button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><FileSearch size={18} /> Riwayat</button><button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><UserCircle2 size={18} /> Profil</button></nav></div>
+    <div className="space-y-4 px-1"><div className="flex items-center gap-3 rounded-xl bg-[#e9fcb5] p-3"><span className="size-2.5 rounded-full bg-[#85c254]" /><div><p className="text-xs font-bold">Sinkronisasi BMKG</p><p className="text-xs text-[#44483f]">Data cuaca aktif</p></div></div><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div><div><p className="text-xs font-bold">Pak Slamet</p><p className="text-xs text-[#44483f]">Ketua Poktan</p></div></div><Settings size={18} className="text-[#44483f]" /></div></div>
+  </aside>;
+}
+
+export function AddLandPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [area, setArea] = useState("");
+  const [method, setMethod] = useState<LocationMethod>("satellite");
+  const [notice, setNotice] = useState("");
+
+  const continueToLocation = () => {
+    if (!name.trim()) {
+      setNotice("Nama petak perlu diisi sebelum memilih lokasi.");
+      return;
+    }
+    window.location.href = "/farmer/lands/new/location";
+  };
+
+  return <div className="min-h-screen min-w-[300px] bg-[#f3f3ec] text-[#15240a]"><Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} /><div className="md:pl-[260px]"><header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMenuOpen(true)} aria-label="Buka menu"><Menu size={22} /></button><span className="rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">Wilayah: Subak Jatiluwih</span><div className="flex items-center gap-3 sm:gap-4"><span className="hidden items-center gap-2 text-xs font-semibold text-[#44483f] sm:flex"><CloudSun size={18} /> Cerah Berawan 28°C</span><Bell size={17} className="text-[#44483f]" /><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div></div></header>
+    <main className="mx-auto flex max-w-[760px] flex-col items-center px-4 py-8 sm:px-8 lg:py-12"><div className="w-full max-w-[680px] space-y-6"><div className="flex items-center justify-between gap-3"><a href="/farmer/lands" className="flex items-center gap-2 text-sm font-semibold text-[#364c23] hover:text-[#15240a]"><ArrowLeft size={14} /> Kembali ke Daftar Lahan</a><span className="flex shrink-0 items-center gap-2 rounded-full bg-[#e4f6b0] px-3 py-1 text-xs font-semibold"><span className="size-2 rounded-full bg-[#85c254]" /> Langkah 1 dari 2</span></div><motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}><h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Daftarkan Petak Sawah Baru</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-[#44483f]">Tambahkan nama petak dan tentukan metode penentuan lokasi agar sistem dapat menyelaraskan stasiun cuaca BMKG terdekat.</p></motion.div>
+      <motion.form initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} onSubmit={(event) => { event.preventDefault(); continueToLocation(); }} className="space-y-6 rounded-3xl bg-white p-5 shadow-[0_8px_24px_-4px_rgba(21,36,10,0.06)] sm:p-8"><div className="space-y-2"><div className="flex items-center justify-between gap-3"><label htmlFor="land-name" className="text-sm font-semibold">Nama Petak Sawah <span className="text-[#ba1a1a]">*</span></label><span className="text-xs text-[#44483f]">Wajib diisi</span></div><input id="land-name" value={name} onChange={(event) => { setName(event.target.value); setNotice(""); }} placeholder="Masukkan nama pengenal petak..." className="h-13 w-full rounded-xl bg-[#f3f3ec] px-4 text-sm outline-none ring-[#85c254] placeholder:text-[#75786e] focus:ring-2" /><p className="text-xs font-semibold text-[#44483f]">Contoh: Blok Tirto A3, Petak Kulon Bawah</p></div><div className="space-y-2"><div className="flex items-center justify-between gap-3"><label htmlFor="land-area" className="text-sm font-semibold">Perkiraan Luas Lahan <span className="font-normal text-[#44483f]">(Opsional)</span></label><span className="text-xs text-[#44483f]">Bisa diubah nanti</span></div><div className="relative"><input id="land-area" value={area} onChange={(event) => setArea(event.target.value)} placeholder="Misal: 0.85 Ha" className="h-13 w-full rounded-xl bg-[#f3f3ec] px-4 pr-28 text-sm outline-none ring-[#85c254] placeholder:text-[#75786e] focus:ring-2" /><span className="absolute right-3 top-3 rounded-lg bg-[#e4f6b0] px-3 py-1 text-xs font-semibold">Ha / Ubin</span></div><p className="text-xs font-semibold text-[#44483f]">Hektar (Ha) atau Bau/Ubin</p></div><div className="space-y-3 pt-2"><div className="flex items-center justify-between gap-3"><h2 className="text-sm font-semibold">Pilih Cara Menentukan Titik Lokasi</h2><span className="rounded bg-[#b4f580]/60 px-2 py-0.5 text-[10px] font-semibold text-[#364c23]">Rekomendasi Satelit</span></div><div className="space-y-3">{methods.map(({ id, title, description, icon: Icon }) => { const selected = method === id; return <button type="button" key={id} onClick={() => setMethod(id)} className={`flex w-full items-start gap-4 rounded-xl p-4 text-left transition-all duration-200 ${selected ? "bg-[#e9fcb5] shadow-[0_2px_8px_-1px_rgba(21,36,10,0.08)]" : "bg-[#f3f3ec] hover:bg-[#edf4dc]"}`}><span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-[#15240a] text-[#85c254]" : "bg-[#def0ab] text-[#364c23]"}`}><Icon size={20} /></span><span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-3"><strong className="text-sm leading-5">{title}</strong><span className={`flex size-5 shrink-0 items-center justify-center rounded-full ${selected ? "bg-[#15240a] text-[#85c254]" : "bg-[#deded4] text-transparent"}`}><Check size={12} /></span></span><span className="mt-0.5 block text-xs leading-5 text-[#44483f]">{description}</span></span></button>; })}</div></div><div className="flex flex-col gap-3 pt-2 sm:flex-row"><button type="submit" className="flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-[#85c254] text-sm font-semibold text-[#15240a] shadow-[0_4px_6px_rgba(133,194,84,0.3)] transition-colors hover:bg-[#98cf6a]">Lanjut ke Pemilihan Lokasi <ArrowRight size={16} /></button><a href="/farmer/lands" className="flex h-14 items-center justify-center rounded-xl px-6 text-sm font-semibold text-[#364c23] hover:bg-[#f3f3ec]">Batal</a></div>{notice && <p role="status" className={`rounded-xl px-4 py-3 text-xs font-semibold ${name.trim() ? "bg-[#e9fcb5] text-[#364c23]" : "bg-[#fff0ed] text-[#9f2d2d]"}`}>{notice}</p>}</motion.form>
+      <div className="flex w-full items-start gap-3 rounded-xl bg-[#e9fcb5]/60 p-4 text-xs leading-5 text-[#44483f]"><Database size={17} className="mt-0.5 shrink-0 text-[#364c23]" /><p><strong className="text-[#15240a]">Prinsip Privasi Data Petani:</strong> Lokasi petak sawah Anda hanya digunakan untuk mengambil data cuaca BMKG dan riwayat irigasi kelompok tani. Data kepemilikan tidak disebarluaskan.</p></div></div></main></div></div>;
+}

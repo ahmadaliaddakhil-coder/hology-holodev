@@ -30,8 +30,14 @@
           "properties": {
             "available": {"type": "boolean"},
             "cached": {"type": "boolean"},
+            "analysis_time": {"type": "string", "format": "date-time"},
+            "fetched_at": {"type": "string", "format": "date-time"},
             "target_times": {"type": "array", "items": {"type": "string", "format": "date-time"}}
-          }
+          },
+          "allOf": [{
+            "if": {"properties": {"available": {"const": true}}},
+            "then": {"required": ["analysis_time", "target_times"]}
+          }]
         },
         "field_pulse": {"$ref": "#/$defs/fieldPulse"}
       },
@@ -63,6 +69,9 @@
             },
             "evaluated_at": {"type": "string", "format": "date-time"},
             "ruleset_version": {"const": "water-v0.2"}
+            ,"bmkg_delivery": {"enum": ["live", "cached"]}
+            ,"bmkg_freshness": {"enum": ["current", "stale", "unavailable"]}
+            ,"field_pulse_freshness": {"enum": ["current_for_case", "needs_confirmation", "unavailable"]}
           },
           "additionalProperties": true
         }

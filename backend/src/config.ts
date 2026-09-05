@@ -15,4 +15,5 @@ export const config = {
     .map((origin) => origin.trim().replace(/^['"]|['"]$/g, '').replace(/\/$/, ''))
     .filter(Boolean),
   isProduction: process.env.NODE_ENV === 'production',
+  bmkgCacheTtlMinutes: Number(process.env.BMKG_CACHE_TTL_MINUTES ?? 120),
 };

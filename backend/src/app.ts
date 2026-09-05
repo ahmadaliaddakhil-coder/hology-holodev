@@ -2,7 +2,14 @@ import cors from 'cors';
 import 'dotenv/config.js';
 import express from 'express';
 import rateLimit from "express-rate-limit"
-import { config } from './config';
+import path from 'node:path';
+import { config } from './config.js';
+import { createRepositoryFactory } from './domain/repositories/factory.js';
+import { supabase } from './infrastructure/persistence/supabase.js';
+import { SupabaseBmkgCache } from './infrastructure/cache/supabase-bmkg-cache.js';
+import { BmkgAdapter } from './infrastructure/bmkg/bmkg-adapter.js';
+import { requireAuth } from './shared/auth.js';
+import { createApiRouter } from './routes/api.js';
 
 const app = express();
 
@@ -28,6 +35,25 @@ app.use(
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok' });
 });
+
+app.get('/api/docs', (_request, response) => {
+  response.json({
+    title: 'RembukTani M2 API',
+    openapi: '/api/openapi.yaml',
+    description: 'Authenticated API for land, evidence, assessment, review, human decision, and deterministic brief workflows.',
+  });
+});
+app.get('/api/openapi.yaml', (_request, response) => {
+  response.sendFile(path.resolve(process.cwd(), 'docs', 'openapi.yaml'));
+});
+
+app.use(
+  '/api',
+  requireAuth(supabase),
+  createApiRouter(createRepositoryFactory(supabase), {
+    bmkgAdapter: new BmkgAdapter(undefined, new SupabaseBmkgCache(supabase, config.bmkgCacheTtlMinutes)),
+  }),
+);
 
 app.use((_request, response) => {
   response.status(404).json({ error: 'Not found' });

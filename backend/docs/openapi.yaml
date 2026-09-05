@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: RembukTani M2 API
+  version: 0.2.0
+  description: API for land-based decision support with BMKG evidence, Field Pulse, transparent assessment, human decisions, and deterministic briefs.
+servers:
+  - url: http://localhost:3000/api
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200': { description: API is healthy }
+  /lands:
+    get:
+      summary: List active lands
+      responses:
+        '200': { description: Land list }
+    post:
+      summary: Create land
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LandInput' }
+      responses:
+        '201': { description: Land created }
+  /lands/{landId}/crop-context:
+    get:
+      summary: Get active crop context
+      parameters: [{ $ref: '#/components/parameters/LandId' }]
+      responses:
+        '200': { description: Active crop context }
+  /decision-cases:
+    get:
+      summary: Get decision history for an owner
+      responses:
+        '200': { description: Decision case history }
+    post:
+      summary: Start decision case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionCaseInput' }
+      responses:
+        '201': { description: Decision case created }
+  /decision-cases/{decisionCaseId}/bmkg/refresh:
+    post:
+      summary: Fetch, normalize, and persist BMKG evidence
+      parameters: [{ $ref: '#/components/parameters/DecisionCaseId' }]
+      responses:
+        '201': { description: BMKG evidence persisted }
+        '409': { description: Land has no verified adm4 }
+  /decision-cases/{decisionCaseId}/field-pulse:
+    post:
+      summary: Persist local Field Pulse evidence
+      parameters: [{ $ref: '#/components/parameters/DecisionCaseId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FieldPulseInput' }
+      responses:
+        '201': { description: Field Pulse persisted }
+  /decision-cases/{decisionCaseId}/assess:
+    post:
+      summary: Run deterministic HOL-87 assessment
+      parameters: [{ $ref: '#/components/parameters/DecisionCaseId' }]
+      responses:
+        '201': { description: Assessment and alternatives persisted }
+  /decision-cases/{decisionCaseId}/reviews:
+    post:
+      summary: Request or submit trusted review
+      parameters: [{ $ref: '#/components/parameters/DecisionCaseId' }]
+      responses:
+        '202': { description: Review requested }
+        '201': { description: Review submitted }
+  /decision-cases/{decisionCaseId}/decision:
+    post:
+      summary: Confirm explicit human decision
+      parameters: [{ $ref: '#/components/parameters/DecisionCaseId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionInput' }
+      responses:
+        '201': { description: Decision record created }
+        '200': { description: Idempotent repeat of same decision }
+        '409': { description: Immutable decision already differs }
+  /decision-records/{id}:
+    get:
+      summary: Read immutable decision record with context
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      responses:
+        '200': { description: Decision record }
+  /decision-records/{id}/brief:
+    post:
+      summary: Generate deterministic Decision Brief
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      responses:
+        '201': { description: Decision Brief generated }
+  /decision-records/{id}/share-text:
+    get:
+      summary: Get deterministic share text
+      parameters: [{ $ref: '#/components/parameters/RecordId' }]
+      responses:
+        '200': { description: Share text }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth access token. The token user must have a matching profiles row.
+  parameters:
+    LandId: { name: landId, in: path, required: true, schema: { type: string, format: uuid } }
+    DecisionCaseId: { name: decisionCaseId, in: path, required: true, schema: { type: string, format: uuid } }
+    RecordId: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    LandInput:
+      type: object
+      required: [owner_id, name, latitude, longitude]
+      properties:
+        owner_id: { type: string, format: uuid }
+        name: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        adm4_code: { type: string }
+    DecisionCaseInput:
+      type: object
+      required: [land_id, crop_context_id, created_by, decision_type]
+      properties:
+        land_id: { type: string, format: uuid }
+        crop_context_id: { type: string, format: uuid }
+        created_by: { type: string, format: uuid }
+        decision_type: { type: string, example: water_condition }
+    FieldPulseInput:
+      type: object
+      required: [water_presence, irrigation_flow]
+      properties:
+        water_presence: { type: string, enum: [present, limited, none, unknown] }
+        irrigation_flow: { type: string, enum: [flowing, limited, not_flowing, unknown] }
+        observed_at: { type: string, format: date-time }
+        is_mock: { type: boolean }
+    DecisionInput:
+      type: object
+      required: [decided_by, assessment_id, decision_type, decision_text]
+      properties:
+        decided_by: { type: string, format: uuid }
+        assessment_id: { type: string, format: uuid }
+        decision_type: { type: string, enum: [selected_option, custom, deferred] }
+        selected_action_option_id: { type: string, format: uuid }
+        decision_text: { type: string }
+        reason: { type: string }
+        evidence_ids: { type: array, items: { type: string, format: uuid } }

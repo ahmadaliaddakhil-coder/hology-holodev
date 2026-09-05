@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
+import { readLandDraft, updateLandDraft } from "../../lib/land-draft";
 
 type MapMode = "satellite" | "road" | "subak";
 
@@ -70,13 +71,22 @@ function MapCanvas({ mode, position, onSelect }: { mode: MapMode; position: [num
 }
 
 export function LocationMapPage() {
+  const initialDraft = readLandDraft();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mode, setMode] = useState<MapMode>("satellite");
-  const [position, setPosition] = useState<[number, number]>([-8.1294, 112.5718]);
+  const [position, setPosition] = useState<[number, number]>([initialDraft.latitude ?? -8.1294, initialDraft.longitude ?? 112.5718]);
   const [search, setSearch] = useState("Sukoraharjo, Kepanjen");
   const [notice, setNoticeState] = useState("");
   const setNotice = (message: string) => {
     if (message === "Lokasi petak tersimpan dan siap dilanjutkan.") {
+      updateLandDraft({
+        latitude: position[0],
+        longitude: position[1],
+        province: "Jawa Timur",
+        regency: "Kabupaten Malang",
+        district: "Kepanjen",
+        village: search.split(",")[0]?.trim() || "Sukoraharjo",
+      });
       window.location.href = "/farmer/lands/new/details";
       return;
     }

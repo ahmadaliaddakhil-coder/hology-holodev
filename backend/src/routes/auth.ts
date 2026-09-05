@@ -30,6 +30,12 @@ const isNetworkAuthError = (error: unknown): boolean => {
   const candidate = error as { name?: string; status?: number };
   return candidate.name === 'AuthRetryableFetchError' || candidate.status === 0 || (candidate.status ?? 0) >= 500;
 };
+const isEmailRateLimitError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; status?: number };
+  return candidate.status === 429 && candidate.code === 'over_email_send_rate_limit';
+};
+const emailRateLimitMessage = 'Batas pengiriman email tercapai. Tunggu hingga satu jam, lalu coba lagi.';
 
 export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
   const router = Router();
@@ -61,7 +67,11 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
           }
         : { phone: identity.phone!, password, options: { data: { display_name: displayName, role }, channel: 'whatsapp' as const } };
       const { data, error } = await anonClient.auth.signUp(credentials);
-      if (error) return void response.status(isNetworkAuthError(error) ? 503 : 400).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : error.message });
+      if (error) {
+        if (isNetworkAuthError(error)) return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+        if (isEmailRateLimitError(error)) return void response.status(429).json({ error: emailRateLimitMessage });
+        return void response.status(400).json({ error: error.message });
+      }
       if (!data.user || data.user.identities?.length === 0) return void response.status(409).json({ error: 'Akun sudah terdaftar' });
 
       const { error: profileError } = await serviceClient.from('profiles').upsert({
@@ -108,6 +118,43 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     const { data, error } = await createAnonClient().auth.refreshSession({ refresh_token: refreshToken });
     if (error || !data.session) return void response.status(isNetworkAuthError(error) ? 503 : 401).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : 'Sesi tidak dapat diperbarui' });
     response.json({ session: publicSession(data.session) });
+  });
+
+  router.post('/forgot-password', async (request, response) => {
+    const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';
+    if (!email || !email.includes('@')) return void response.status(400).json({ error: 'Email tidak valid' });
+    const requestOrigin = typeof request.headers.origin === 'string' ? request.headers.origin.replace(/\/$/, '') : '';
+    const clientOrigin = config.clientOrigins.includes(requestOrigin) ? requestOrigin : config.clientOrigins[0];
+    const { error } = await createAnonClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${clientOrigin}/reset-password`,
+    });
+    if (error && isNetworkAuthError(error)) {
+      return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+    }
+    if (isEmailRateLimitError(error)) {
+      return void response.status(429).json({ error: emailRateLimitMessage });
+    }
+    if (error) {
+      console.error('Supabase password recovery failed', {
+        code: error.code,
+        message: error.message,
+        status: error.status,
+      });
+    }
+    // Deliberately return the same response for existing and unknown accounts.
+    response.json({ message: 'Jika email terdaftar, tautan reset telah dikirim.' });
+  });
+
+  router.post('/reset-password', async (request, response) => {
+    const accessToken = typeof request.body?.accessToken === 'string' ? request.body.accessToken : '';
+    const password = typeof request.body?.password === 'string' ? request.body.password : '';
+    if (!accessToken) return void response.status(400).json({ error: 'Tautan reset tidak valid atau sudah kedaluwarsa' });
+    if (password.length < 8) return void response.status(400).json({ error: 'Kata sandi minimal 8 karakter' });
+    const { data, error } = await serviceClient.auth.getUser(accessToken);
+    if (error || !data.user) return void response.status(401).json({ error: 'Tautan reset tidak valid atau sudah kedaluwarsa' });
+    const { error: updateError } = await serviceClient.auth.admin.updateUserById(data.user.id, { password });
+    if (updateError) return void response.status(400).json({ error: updateError.message });
+    response.json({ message: 'Kata sandi berhasil diperbarui.' });
   });
 
   return router;

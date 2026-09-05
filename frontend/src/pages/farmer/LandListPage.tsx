@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -19,6 +19,7 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
+import { farmerApi } from "../../services/farmer-api";
 
 const heroImage = "https://www.figma.com/api/mcp/asset/1226818b-0095-468e-9cf7-37964df49075.png";
 const fieldImage = "https://www.figma.com/api/mcp/asset/846a2f3b-dc7b-474b-91dd-5d4d5c1a5f1d.png";
@@ -27,10 +28,7 @@ type Filter = "Semua" | "Padi Ciherang" | "Padi Inpari 32" | "Perlu Ditinjau";
 
 const filters: Filter[] = ["Semua", "Padi Ciherang", "Padi Inpari 32", "Perlu Ditinjau"];
 
-const landCards = [
-  { id: "tirto-a3", name: "Blok Tirto A3", crop: "Padi Inpari 32", location: "Kepanjen, Malang", subak: "Subak Tirto Mulyo", stage: "Fase Berbunga · 55 HST", area: "0.85 Ha", humidity: "68%", review: false },
-  { id: "tirto-a3-copy", name: "Blok Tirto A3", crop: "Padi Inpari 32", location: "Kepanjen, Malang", subak: "Subak Tirto Mulyo", stage: "Fase Berbunga · 55 HST", area: "0.85 Ha", humidity: "68%", review: true },
-];
+type LandCardData = { id: string; name: string; crop: string; location: string; subak: string; stage: string; area: string; humidity: string; review: boolean };
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -54,7 +52,7 @@ function Metric({ icon: Icon, label, value, tone }: { icon: typeof Sprout; label
   return <div className="flex min-w-0 items-center gap-3 rounded-xl bg-[#fafaf6] p-4 shadow-sm sm:py-5"><div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${tone}`}><Icon size={19} /></div><div className="min-w-0"><p className="text-[10px] font-bold tracking-[0.12em] text-[#44483f]">{label}</p><p className="font-display text-base font-semibold leading-6 text-[#15240a] sm:text-lg">{value}</p></div></div>;
 }
 
-function LandCard({ card, index }: { card: (typeof landCards)[number]; index: number }) {
+function LandCard({ card, index }: { card: LandCardData; index: number }) {
   return <motion.article role="link" tabIndex={0} onClick={() => { window.location.href = `/farmer/lands/${card.id}`; }} onKeyDown={(event) => { if (event.key === "Enter") window.location.href = `/farmer/lands/${card.id}`; }} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08, duration: 0.4 }} className="cursor-pointer overflow-hidden rounded-2xl bg-[#fafaf6] shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg">
     <div className="relative h-44 overflow-hidden bg-[#364c23]"><img src={fieldImage} alt={`Foto ${card.name}`} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-[#15240a]/80 via-transparent to-transparent" /><span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-[#15240a]/85 px-3 py-1 text-[11px] font-semibold text-[#85c254]"><span className="size-2 rounded-full bg-[#85c254]" /> Siap Tinjau</span><span className="absolute right-3 top-3 flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[11px] font-semibold text-[#15240a]"><Droplets size={12} /> Lengas {card.humidity}</span><div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-2 text-white"><div><p className="text-[11px] text-[#bacda5]">Petak Terdaftar</p><h3 className="font-display text-2xl font-bold">{card.name}</h3></div><span className="rounded-md bg-[#85c254] px-2 py-1 text-xs font-semibold text-[#15240a]">{card.area}</span></div></div>
     <div className="space-y-3 p-4"><div className="grid grid-cols-2 gap-3 text-xs"><div className="flex gap-2"><MapPin size={14} className="mt-0.5 shrink-0" /><span>{card.location}</span></div><span className="text-[#666a60]">{card.subak}</span></div><div className="flex items-center justify-between gap-2 rounded-lg bg-[#e9fcb5] p-3 text-[11px] font-semibold"><div className="flex items-center gap-2"><Sprout size={15} /> Varietas Tanaman <strong className="block">{card.crop}</strong></div><span className="rounded-full bg-[#bfe57d] px-2 py-1 text-center text-[10px]">{card.stage}</span></div><div className="flex items-center justify-between gap-2 rounded-lg bg-[#f3f3ec] p-2.5 text-[11px]"><span className="flex items-center gap-1.5"><CloudSun size={15} className="text-[#b98532]" /><strong>24°C, Cerah Berawan</strong></span><span className="rounded bg-white px-2 py-1 text-[#327eaa]">BMKG Real-time</span></div><div className="flex gap-2"><button className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#213014] px-2 py-2 text-[11px] font-semibold text-[#85c254] hover:bg-[#364c23]"><ChevronRight size={13} /> Tinjau Kondisi</button><button className="flex-1 rounded-lg bg-[#f3f3ec] px-2 py-2 text-[11px] font-semibold text-[#15240a] hover:bg-[#e4f6b0]">Detail Lahan</button></div></div>
@@ -65,7 +63,35 @@ export function LandListPage() {
   const [activeFilter, setActiveFilter] = useState<Filter>("Semua");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const visibleCards = activeFilter === "Semua" ? landCards : landCards.filter((card) => activeFilter === card.crop || (activeFilter === "Perlu Ditinjau" && card.review));
+  const [landCards, setLandCards] = useState<LandCardData[]>([]);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
+  const [, setLoadError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    farmerApi.listLands().then(async (lands) => {
+      const cards = await Promise.all(lands.map(async (land): Promise<LandCardData> => {
+        const crop = await farmerApi.getActiveCrop(land.id).catch(() => null);
+        const stageLabels = { vegetative: "Fase Vegetatif", flowering: "Fase Berbunga", ripening: "Fase Pematangan", unknown: "Fase belum diketahui" };
+        return {
+          id: land.id,
+          name: land.name,
+          crop: crop ? [crop.crop_name, crop.variety_name].filter(Boolean).join(" ") : "Konteks belum diisi",
+          location: [land.village || land.district, land.regency].filter(Boolean).join(", ") || `${land.latitude.toFixed(4)}, ${land.longitude.toFixed(4)}`,
+          subak: land.location_source === "bmkg_verified" ? "Lokasi BMKG terverifikasi" : "Lokasi tersimpan",
+          stage: crop ? stageLabels[crop.growth_stage] : "Belum ada fase",
+          area: land.description?.match(/Perkiraan luas:\s*([^|]+)/i)?.[1]?.trim() || "Belum diisi",
+          humidity: "--",
+          review: !crop,
+        };
+      }));
+      if (active) { setLandCards(cards); setLoadState("ready"); }
+    }).catch((error: unknown) => {
+      if (active) { setLoadError(error instanceof Error ? error.message : "Data lahan gagal dimuat"); setLoadState("error"); }
+    });
+    return () => { active = false; };
+  }, []);
+  const visibleCards = loadState === "ready" ? (activeFilter === "Semua" ? landCards : landCards.filter((card) => activeFilter === card.crop || (activeFilter === "Perlu Ditinjau" && card.review))) : [];
 
   return <div className="min-h-screen min-w-[300px] bg-[#f3f3ec] text-[#15240a]"><Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} /><div className="md:pl-[260px]"><header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMenuOpen(true)} aria-label="Buka menu"><Menu size={22} /></button><span className="rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">Wilayah: Subak Jatiluwih</span><div className="flex items-center gap-3 sm:gap-4"><span className="hidden items-center gap-2 text-xs font-semibold text-[#44483f] sm:flex"><CloudSun size={18} /> Cerah Berawan 28°C</span><Bell size={17} className="text-[#44483f]" /><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div></div></header>
     <main className="mx-auto max-w-[1200px] space-y-6 px-4 py-6 sm:px-8 lg:py-8"><motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative min-h-[208px] overflow-hidden rounded-2xl bg-[#15240a] shadow-md"><img src={heroImage} alt="Terasering lahan Subak Jatiluwih" className="absolute inset-0 h-full w-full object-cover opacity-75" /><div className="absolute inset-0 bg-gradient-to-r from-[#15240a]/95 via-[#15240a]/65 to-transparent" /><div className="relative flex min-h-[208px] max-w-2xl flex-col justify-center p-6 sm:p-8"><div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#85c254]"><span className="rounded-full bg-[#85c254]/20 px-3 py-1.5">● Satelit Aktif: Sentinel-2</span><span className="text-[#879974]">· Subak & Poktan Terhubung</span></div><h1 className="font-display text-2xl font-bold text-white sm:text-3xl">Daftar Seluruh Lahan Terdaftar</h1><p className="mt-2 max-w-xl text-sm leading-5 text-[#bacda5]">Kelola petak sawah aktif, pantau kondisi telemetri cuaca, dan lihat riwayat peninjauan secara berkala.</p></div></motion.section>

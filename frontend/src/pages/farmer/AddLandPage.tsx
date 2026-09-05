@@ -19,6 +19,7 @@ import {
   X,
   CloudSun,
 } from "lucide-react";
+import { readLandDraft, updateLandDraft } from "../../lib/land-draft";
 
 type LocationMethod = "satellite" | "device" | "village";
 
@@ -36,10 +37,11 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 export function AddLandPage() {
+  const initialDraft = readLandDraft();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [area, setArea] = useState("");
-  const [method, setMethod] = useState<LocationMethod>("satellite");
+  const [name, setName] = useState(initialDraft.name || "");
+  const [area, setArea] = useState(initialDraft.area || "");
+  const [method, setMethod] = useState<LocationMethod>((initialDraft.locationMethod as LocationMethod) || "satellite");
   const [notice, setNotice] = useState("");
 
   const continueToLocation = () => {
@@ -47,6 +49,7 @@ export function AddLandPage() {
       setNotice("Nama petak perlu diisi sebelum memilih lokasi.");
       return;
     }
+    updateLandDraft({ name: name.trim(), area: area.trim(), locationMethod: method });
     window.location.href = "/farmer/lands/new/location";
   };
 

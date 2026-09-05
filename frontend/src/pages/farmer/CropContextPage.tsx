@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Bell, Check, ChevronLeft, CloudSun, FileSearch, Leaf, Minus, Plus, Settings, Sprout, UserCircle2, Warehouse, X } from "lucide-react";
+import { clearLandDraft, readLandDraft } from "../../lib/land-draft";
+import { farmerApi } from "../../services/farmer-api";
 
 const cropImage = "https://www.figma.com/api/mcp/asset/69a63cd3-cfab-47f3-9eb3-46d730f440d3.png";
 const phases = [
@@ -14,14 +16,58 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 export function CropContextPage() {
+  const draft = readLandDraft();
   const [menuOpen, setMenuOpen] = useState(false);
   const [phase, setPhase] = useState("flowering");
   const [days, setDays] = useState(55);
+  const [cropName] = useState("Padi Sawah");
+  const [variety] = useState("Inpari 32 HDB");
   const [note, setNote] = useState("Tinggi genangan air rata-rata saat ini macak-macak (1–2 cm), tidak terlihat bercak coklat wereng, air inlet lancar dari parit blok timur.");
   const [notice, setNoticeState] = useState("");
+  const [, setSaving] = useState(false);
+
+  const saveLand = async () => {
+    if (!draft.name || draft.latitude === undefined || draft.longitude === undefined) {
+      setNoticeState("Data lahan atau lokasi belum lengkap. Kembali ke langkah pertama.");
+      return;
+    }
+    setSaving(true);
+    setNoticeState("");
+    let createdLandId: string | null = null;
+    try {
+      const land = await farmerApi.createLand({
+        name: draft.name,
+        latitude: draft.latitude,
+        longitude: draft.longitude,
+        description: [draft.area ? `Perkiraan luas: ${draft.area}` : "", note.trim()].filter(Boolean).join(" | ") || undefined,
+        province: draft.province,
+        regency: draft.regency,
+        district: draft.district,
+        village: draft.village,
+        location_source: "client_provided",
+      });
+      createdLandId = land.id;
+      const plantedAt = new Date();
+      plantedAt.setUTCDate(plantedAt.getUTCDate() - days);
+      await farmerApi.createCrop(land.id, {
+        crop_name: cropName,
+        variety_name: variety,
+        growth_stage: phase as "vegetative" | "flowering" | "ripening",
+        planting_date: plantedAt.toISOString().slice(0, 10),
+      });
+      clearLandDraft();
+      window.location.href = `/farmer/lands/${land.id}`;
+    } catch (error) {
+      if (createdLandId) await farmerApi.archiveLand(createdLandId).catch(() => undefined);
+      setNoticeState(error instanceof Error ? error.message : "Lahan gagal disimpan ke database.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const setNotice = (message: string) => {
     if (message.startsWith("Lahan tersimpan")) {
-      window.location.href = "/farmer/lands/land-044";
+      void saveLand();
       return;
     }
     setNoticeState(message);

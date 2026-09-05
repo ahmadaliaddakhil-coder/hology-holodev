@@ -31,7 +31,7 @@ export function RegisterPage() {
       const result = await authApi.register({ displayName, identity, password, role });
       if (result.session) {
         saveAuth(result.session, result.user, true);
-        navigate("/home", { replace: true });
+        navigate("/farmer/dashboard", { replace: true });
       } else {
         setError("Akun dibuat. Periksa WhatsApp/email untuk verifikasi, lalu masuk.");
       }

@@ -1,5 +1,15 @@
 # RembukTani Backend
 
+## Authentication flow
+
+Public endpoints:
+
+- `POST /api/auth/register` — accepts `displayName`, `identity` (email or Indonesian WhatsApp number), `password`, and `role` (`farmer` or `reviewer`).
+- `POST /api/auth/login` — accepts `identity` and `password`, then returns the Supabase access/refresh session and persisted RembukTani profile.
+- `POST /api/auth/refresh` — exchanges a refresh token for a renewed session.
+
+All other `/api/*` routes require `Authorization: Bearer <access-token>`. The service-role key stays in the backend only. Registration uses the anon client and creates the matching `profiles` row server-side; if profile creation fails, the newly-created auth user is rolled back.
+
 Express 5 + TypeScript API for the RembukTani M2 decision-support vertical slice.
 
 ## Setup

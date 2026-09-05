@@ -7,6 +7,11 @@ import { LocationMapPage } from "../pages/farmer/LocationMapPage";
 import { CropContextPage } from "../pages/farmer/CropContextPage";
 import { LandDetailPage } from "../pages/farmer/LandDetailPage";
 import { LandReviewPage } from "../pages/farmer/LandReviewPage";
+import { LoginPage } from "../pages/LoginPage";
+import { RegisterPage } from "../pages/RegisterPage";
+import { HomePage } from "../pages/HomePage";
+import { ProtectedRoute } from "../components/auth/ProtectedRoute";
+
 function App() {
   return (
     <Router>
@@ -19,6 +24,9 @@ function App() {
         <Route path="/farmer/lands/new/details" element={<CropContextPage />} />
         <Route path="/farmer/lands/:landId" element={<LandDetailPage />} />
         <Route path="/farmer/lands/:landId/review" element={<LandReviewPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

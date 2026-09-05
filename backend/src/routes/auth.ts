@@ -1,0 +1,114 @@
+import { Router } from 'express';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { config } from '../config.js';
+import { createAnonClient } from '../infrastructure/persistence/supabase.js';
+
+type AccountRole = 'farmer' | 'reviewer';
+
+const normalizeIdentity = (value: unknown): { email?: string; phone?: string } => {
+  const identity = typeof value === 'string' ? value.trim() : '';
+  if (!identity) throw new Error('Nomor WhatsApp atau email wajib diisi');
+  if (identity.includes('@')) return { email: identity.toLowerCase() };
+
+  const digits = identity.replace(/\D/g, '');
+  if (digits.length < 9 || digits.length > 15) throw new Error('Nomor WhatsApp tidak valid');
+  if (digits.startsWith('62')) return { phone: `+${digits}` };
+  if (digits.startsWith('0')) return { phone: `+62${digits.slice(1)}` };
+  return { phone: `+${digits}` };
+};
+
+const publicSession = (session: { access_token: string; refresh_token: string; expires_at?: number; expires_in: number; token_type: string }) => ({
+  accessToken: session.access_token,
+  refreshToken: session.refresh_token,
+  expiresAt: session.expires_at ?? Math.floor(Date.now() / 1000) + session.expires_in,
+  tokenType: session.token_type,
+});
+
+const messageFor = (error: unknown): string => error instanceof Error ? error.message : 'Permintaan autentikasi gagal';
+const isNetworkAuthError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { name?: string; status?: number };
+  return candidate.name === 'AuthRetryableFetchError' || candidate.status === 0 || (candidate.status ?? 0) >= 500;
+};
+
+export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
+  const router = Router();
+
+  router.post('/register', async (request, response) => {
+    try {
+      const displayName = typeof request.body?.displayName === 'string' ? request.body.displayName.trim() : '';
+      const password = typeof request.body?.password === 'string' ? request.body.password : '';
+      const role: AccountRole = request.body?.role === 'reviewer' ? 'reviewer' : 'farmer';
+      if (displayName.length < 2) throw new Error('Nama lengkap minimal 2 karakter');
+      if (password.length < 8) throw new Error('Kata sandi minimal 8 karakter');
+
+      const identity = normalizeIdentity(request.body?.identity);
+      const anonClient = createAnonClient();
+      const requestOrigin = typeof request.headers.origin === 'string'
+        ? request.headers.origin.replace(/\/$/, '')
+        : '';
+      const clientOrigin = config.clientOrigins.includes(requestOrigin)
+        ? requestOrigin
+        : config.clientOrigins[0];
+      const credentials = identity.email
+        ? {
+            email: identity.email,
+            password,
+            options: {
+              data: { display_name: displayName, role },
+              emailRedirectTo: `${clientOrigin}/login?verified=1`,
+            },
+          }
+        : { phone: identity.phone!, password, options: { data: { display_name: displayName, role }, channel: 'whatsapp' as const } };
+      const { data, error } = await anonClient.auth.signUp(credentials);
+      if (error) return void response.status(isNetworkAuthError(error) ? 503 : 400).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : error.message });
+      if (!data.user || data.user.identities?.length === 0) return void response.status(409).json({ error: 'Akun sudah terdaftar' });
+
+      const { error: profileError } = await serviceClient.from('profiles').upsert({
+        user_id: data.user.id,
+        display_name: displayName,
+        role,
+      }, { onConflict: 'user_id' });
+      if (profileError) {
+        await serviceClient.auth.admin.deleteUser(data.user.id);
+        throw new Error('Profil akun gagal dibuat');
+      }
+
+      response.status(201).json({
+        user: { id: data.user.id, displayName, role },
+        session: data.session ? publicSession(data.session) : null,
+        requiresVerification: !data.session,
+      });
+    } catch (error) {
+      response.status(400).json({ error: messageFor(error) });
+    }
+  });
+
+  router.post('/login', async (request, response) => {
+    try {
+      const password = typeof request.body?.password === 'string' ? request.body.password : '';
+      if (!password) throw new Error('Kata sandi wajib diisi');
+      const anonClient = createAnonClient();
+      const identity = normalizeIdentity(request.body?.identity);
+      const credentials = identity.email ? { email: identity.email, password } : { phone: identity.phone!, password };
+      const { data, error } = await anonClient.auth.signInWithPassword(credentials);
+      if (error) return void response.status(isNetworkAuthError(error) ? 503 : 401).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : 'Nomor WhatsApp/email atau kata sandi salah' });
+      if (!data.session) return void response.status(401).json({ error: 'Nomor WhatsApp/email atau kata sandi salah' });
+      const { data: profile } = await serviceClient.from('profiles').select('*').eq('user_id', data.user.id).single();
+      if (!profile) return void response.status(403).json({ error: 'Akun belum memiliki profil RembukTani' });
+      response.json({ user: profile, session: publicSession(data.session) });
+    } catch (error) {
+      response.status(400).json({ error: messageFor(error) });
+    }
+  });
+
+  router.post('/refresh', async (request, response) => {
+    const refreshToken = typeof request.body?.refreshToken === 'string' ? request.body.refreshToken : '';
+    if (!refreshToken) return void response.status(400).json({ error: 'Refresh token wajib diisi' });
+    const { data, error } = await createAnonClient().auth.refreshSession({ refresh_token: refreshToken });
+    if (error || !data.session) return void response.status(isNetworkAuthError(error) ? 503 : 401).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : 'Sesi tidak dapat diperbarui' });
+    response.json({ session: publicSession(data.session) });
+  });
+
+  return router;
+};

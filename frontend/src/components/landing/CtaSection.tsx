@@ -32,7 +32,7 @@ export function CtaSection() {
               tani Anda.
             </p>
             <div className="pt-2">
-              <Link to="/app">
+              <Link to="/register">
                 <Button variant="accent" className="px-6 py-4 text-base font-bold">
                   Daftar Kelompok Tani
                   <ArrowRight className="size-4" aria-hidden />

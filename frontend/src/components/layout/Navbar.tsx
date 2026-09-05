@@ -65,12 +65,12 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 sm:flex">
-          <Link to="/app">
+          <Link to="/login">
             <Button variant="secondary" className="min-h-9 px-3 py-2">
               Masuk
             </Button>
           </Link>
-          <Link to="/app">
+          <Link to="/register">
             <Button className="min-h-9 px-3 py-2">Daftar</Button>
           </Link>
         </div>
@@ -109,12 +109,12 @@ export function Navbar() {
                 </a>
               ))}
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <Link to="/app" onClick={() => setOpen(false)}>
+                <Link to="/login" onClick={() => setOpen(false)}>
                   <Button variant="soft" className="w-full">
                     Masuk
                   </Button>
                 </Link>
-                <Link to="/app" onClick={() => setOpen(false)}>
+                <Link to="/register" onClick={() => setOpen(false)}>
                   <Button className="w-full">Daftar</Button>
                 </Link>
               </div>

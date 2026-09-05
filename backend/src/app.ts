@@ -10,8 +10,11 @@ import { SupabaseBmkgCache } from './infrastructure/cache/supabase-bmkg-cache.js
 import { BmkgAdapter } from './infrastructure/bmkg/bmkg-adapter.js';
 import { requireAuth } from './shared/auth.js';
 import { createApiRouter } from './routes/api.js';
+import { createAuthRouter } from './routes/auth.js';
 
 const app = express();
+const authLandingOrigin = config.clientOrigins.find((origin) => origin === 'http://127.0.0.1:5173')
+  ?? config.clientOrigins[0];
 
 app.set('trust proxy', 1);
 
@@ -32,6 +35,12 @@ app.use(
   }),
 );
 
+// Supabase currently uses the backend root as its Site URL. Forward confirmed
+// users to the PWA instead of leaving them on the API's JSON 404 response.
+app.get('/', (_request, response) => {
+  response.redirect(302, `${authLandingOrigin}/login?verified=1`);
+});
+
 app.get('/api/health', (_request, response) => {
   response.json({ status: 'ok' });
 });
@@ -46,6 +55,8 @@ app.get('/api/docs', (_request, response) => {
 app.get('/api/openapi.yaml', (_request, response) => {
   response.sendFile(path.resolve(process.cwd(), 'docs', 'openapi.yaml'));
 });
+
+app.use('/api/auth', createAuthRouter(supabase));
 
 app.use(
   '/api',

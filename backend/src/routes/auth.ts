@@ -30,6 +30,12 @@ const isNetworkAuthError = (error: unknown): boolean => {
   const candidate = error as { name?: string; status?: number };
   return candidate.name === 'AuthRetryableFetchError' || candidate.status === 0 || (candidate.status ?? 0) >= 500;
 };
+const isEmailRateLimitError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; status?: number };
+  return candidate.status === 429 && candidate.code === 'over_email_send_rate_limit';
+};
+const emailRateLimitMessage = 'Batas pengiriman email tercapai. Tunggu hingga satu jam, lalu coba lagi.';
 
 export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
   const router = Router();
@@ -61,7 +67,11 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
           }
         : { phone: identity.phone!, password, options: { data: { display_name: displayName, role }, channel: 'whatsapp' as const } };
       const { data, error } = await anonClient.auth.signUp(credentials);
-      if (error) return void response.status(isNetworkAuthError(error) ? 503 : 400).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : error.message });
+      if (error) {
+        if (isNetworkAuthError(error)) return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+        if (isEmailRateLimitError(error)) return void response.status(429).json({ error: emailRateLimitMessage });
+        return void response.status(400).json({ error: error.message });
+      }
       if (!data.user || data.user.identities?.length === 0) return void response.status(409).json({ error: 'Akun sudah terdaftar' });
 
       const { error: profileError } = await serviceClient.from('profiles').upsert({
@@ -121,10 +131,8 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     if (error && isNetworkAuthError(error)) {
       return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
     }
-    if (error?.status === 429 || error?.code === 'over_email_send_rate_limit') {
-      return void response.status(429).json({
-        error: 'Batas pengiriman email tercapai. Tunggu hingga satu jam, lalu minta tautan reset baru.',
-      });
+    if (isEmailRateLimitError(error)) {
+      return void response.status(429).json({ error: emailRateLimitMessage });
     }
     if (error) {
       console.error('Supabase password recovery failed', {

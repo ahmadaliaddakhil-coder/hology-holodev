@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -15,6 +15,8 @@ import {
   Warehouse,
   X,
 } from "lucide-react";
+import { getUser } from "../../lib/auth";
+import { farmerApi } from "../../services/farmer-api";
 
 const heroImage = "https://www.figma.com/api/mcp/asset/3b17483f-6278-487e-b29e-3726fe9fcd12.png";
 const firstFieldImage = "https://www.figma.com/api/mcp/asset/864611c8-3b58-4444-8606-6186e6a5b233.png";
@@ -29,34 +31,7 @@ const filters: Filter[] = [
   "Fase Vegetatif (3)",
 ];
 
-const fields = [
-  {
-    name: "Blok Tirto A3",
-    location: "Kepanjen, Malang",
-    group: "SUBAK BLOK BARAT",
-    area: "1.4 Hektar",
-    variety: "Padi Inpari 32",
-    stage: "Fase Bunting / Berbunga (55 HST)",
-    image: firstFieldImage,
-    tone: "amber",
-    status: "Menunggu Rembuk Pupuk Susulan",
-    insightTitle: "Sinkronisasi BMKG",
-    insight: "Diperbarui 1 jam lalu - Cerah Berawan 24°C, angin tenang 4 km/j",
-  },
-  {
-    name: "Petak Bawah Timur #04",
-    location: "Desa Sukamaju",
-    group: "SUBAK LEMBAH",
-    area: "0.8 Hektar",
-    variety: "Padi Ciherang",
-    stage: "Fase Vegetatif (28 HST)",
-    image: secondFieldImage,
-    tone: "green",
-    status: "Kondisi Petak Optimal",
-    insightTitle: "Kondisi Air Lahan",
-    insight: "BMKG normal - Genangan macak-macak aman terkendali 3 cm",
-  },
-];
+type FieldData = { id: string; name: string; location: string; group: string; area: string; variety: string; stage: string; image: string; tone: string; status: string; insightTitle: string; insight: string };
 
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
   return (
@@ -67,7 +42,7 @@ function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse
   );
 }
 
-function FieldCard({ field, index }: { field: (typeof fields)[number]; index: number }) {
+function FieldCard({ field, index }: { field: FieldData; index: number }) {
   return (
     <motion.article
       initial={{ opacity: 0, y: 18 }}
@@ -101,7 +76,7 @@ function FieldCard({ field, index }: { field: (typeof fields)[number]; index: nu
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <span className={`flex items-center gap-2 text-xs font-semibold ${field.tone === "amber" ? "text-[#b98532]" : "text-[#4f8a45]"}`}><span className={`size-2 rounded-full ${field.tone === "amber" ? "bg-[#b98532]" : "bg-[#4f8a45]"}`} />{field.status}</span>
-          <button className="flex items-center gap-2 rounded-xl bg-[#85c254] px-4 py-2.5 text-sm font-semibold text-[#15240a] transition-colors hover:bg-[#98cf6a]">Tinjau Kondisi <ChevronRight size={16} /></button>
+          <a href={`/farmer/lands/${field.id}`} className="flex items-center gap-2 rounded-xl bg-[#85c254] px-4 py-2.5 text-sm font-semibold text-[#15240a] transition-colors hover:bg-[#98cf6a]">Tinjau Kondisi <ChevronRight size={16} /></a>
         </div>
       </div>
     </motion.article>
@@ -111,6 +86,35 @@ function FieldCard({ field, index }: { field: (typeof fields)[number]; index: nu
 export function FarmerDashboard() {
   const [activeFilter, setActiveFilter] = useState<Filter>(filters[0]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [fields, setFields] = useState<FieldData[]>([]);
+  const user = getUser();
+  void user;
+
+  useEffect(() => {
+    let active = true;
+    farmerApi.listLands().then(async (lands) => {
+      const mapped = await Promise.all(lands.map(async (land, index): Promise<FieldData> => {
+        const crop = await farmerApi.getActiveCrop(land.id).catch(() => null);
+        const stages = { vegetative: "Fase Vegetatif", flowering: "Fase Berbunga", ripening: "Fase Pematangan", unknown: "Fase belum diketahui" };
+        return {
+          id: land.id,
+          name: land.name,
+          location: [land.village || land.district, land.regency].filter(Boolean).join(", ") || "Lokasi tersimpan",
+          group: land.location_source === "bmkg_verified" ? "LOKASI BMKG TERVERIFIKASI" : "LAHAN PETANI",
+          area: land.description?.match(/Perkiraan luas:\s*([^|]+)/i)?.[1]?.trim() || "Luas belum diisi",
+          variety: crop ? [crop.crop_name, crop.variety_name].filter(Boolean).join(" ") : "Konteks tanaman belum diisi",
+          stage: crop ? stages[crop.growth_stage] : "Perlu konteks tanaman",
+          image: index % 2 === 0 ? firstFieldImage : secondFieldImage,
+          tone: crop ? "green" : "amber",
+          status: crop ? "Siap ditinjau" : "Lengkapi konteks tanaman",
+          insightTitle: "Sinkronisasi BMKG",
+          insight: land.adm4_code ? `ADM4 ${land.adm4_code} siap diperbarui` : "Kode wilayah BMKG belum diverifikasi",
+        };
+      }));
+      if (active) setFields(mapped);
+    }).catch(() => { if (active) setFields([]); });
+    return () => { active = false; };
+  }, []);
   const visibleFields = activeFilter === filters[0]
     ? fields
     : fields.filter((field) => activeFilter === filters[1] || (activeFilter === filters[2] ? field.tone === "amber" : field.tone === "green"));

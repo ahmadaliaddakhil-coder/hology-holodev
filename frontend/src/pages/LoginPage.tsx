@@ -28,7 +28,7 @@ export function LoginPage() {
     try {
       const result = await authApi.login(identity, password);
       saveAuth(result.session, result.user, form.get("remember") === "on");
-      const destination = (location.state as { from?: string } | null)?.from || "/home";
+      const destination = (location.state as { from?: string } | null)?.from || "/farmer/dashboard";
       navigate(destination, { replace: true });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Login gagal");

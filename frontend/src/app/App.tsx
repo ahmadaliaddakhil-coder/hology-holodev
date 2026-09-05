@@ -17,13 +17,13 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
-        <Route path="/farmer/lands" element={<LandListPage />} />
-        <Route path="/farmer/lands/new" element={<AddLandPage />} />
-        <Route path="/farmer/lands/new/location" element={<LocationMapPage />} />
-        <Route path="/farmer/lands/new/details" element={<CropContextPage />} />
-        <Route path="/farmer/lands/:landId" element={<LandDetailPage />} />
-        <Route path="/farmer/lands/:landId/review" element={<LandReviewPage />} />
+        <Route path="/farmer/dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
+        <Route path="/farmer/lands" element={<ProtectedRoute><LandListPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new" element={<ProtectedRoute><AddLandPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new/location" element={<ProtectedRoute><LocationMapPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new/details" element={<ProtectedRoute><CropContextPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId" element={<ProtectedRoute><LandDetailPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/review" element={<ProtectedRoute><LandReviewPage /></ProtectedRoute>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

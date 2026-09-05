@@ -79,7 +79,12 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     saveAuth(refreshed.session, user, remember);
     session = refreshed.session;
   }
-  const response = await fetch(`${apiBase}${path}`, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}`, ...init.headers } });
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase}${path}`, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.accessToken}`, ...init.headers } });
+  } catch {
+    throw new Error("Server RembukTani belum terhubung. Pastikan backend aktif, lalu coba lagi.");
+  }
   if (response.status === 401) { clearAuth(); throw new Error("Sesi berakhir. Silakan masuk kembali."); }
   const body = await response.json().catch(() => ({})) as { error?: string };
   if (!response.ok) throw new Error(body.error || "Permintaan gagal");

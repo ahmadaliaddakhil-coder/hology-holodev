@@ -1,5 +1,5 @@
 import { AtSign, Leaf, LockKeyhole, LogIn, ShieldCheck, Sun } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AuthField } from "../components/auth/AuthField";
 import { AuthShell } from "../components/auth/AuthShell";
@@ -13,6 +13,13 @@ export function LoginPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const verified = searchParams.get("verified") === "1";
+
+  useEffect(() => {
+    const recovery = new URLSearchParams(window.location.hash.slice(1));
+    if (recovery.get("type") === "recovery" && recovery.get("access_token")) {
+      navigate(`/reset-password${window.location.hash}`, { replace: true });
+    }
+  }, [navigate]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +66,7 @@ export function LoginPage() {
           </p>
         )}
         <AuthField name="identity" label="Nomor WhatsApp atau Email" hint={<span className="font-display font-normal text-[#364c23]/75">Wajib</span>} icon={<AtSign size={21} />} placeholder="0812-XXXX-XXXX atau nama@email.com" autoComplete="username" />
-        <AuthField name="password" label="Kata Sandi" hint={<button type="button" className="text-xs text-[#56652e] underline">Lupa Password?</button>} icon={<LockKeyhole size={20} />} placeholder="Masukkan kata sandi akun" type={showPassword ? "text" : "password"} autoComplete="current-password" onToggleVisibility={() => setShowPassword((value) => !value)} />
+        <AuthField name="password" label="Kata Sandi" hint={<Link to="/forgot-password" className="text-xs text-[#56652e] underline">Lupa Password?</Link>} icon={<LockKeyhole size={20} />} placeholder="Masukkan kata sandi akun" type={showPassword ? "text" : "password"} autoComplete="current-password" onToggleVisibility={() => setShowPassword((value) => !value)} />
         <label className="flex items-center gap-2 px-1 font-display text-[15px]"><input name="remember" type="checkbox" defaultChecked className="size-5 accent-[#85c254]" />Ingat saya di perangkat ini</label>
         <button type="submit" disabled={loading} className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#85c254] font-display text-lg font-semibold shadow-md transition hover:bg-[#94d162] disabled:cursor-wait disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15240a]"><LogIn size={21} /> {loading ? "Memeriksa akun…" : "Masuk"}</button>
         {message && <p className="rounded-lg bg-[#e9fcb5] p-3 font-display text-sm text-[#364c23]" role="status">{message}</p>}

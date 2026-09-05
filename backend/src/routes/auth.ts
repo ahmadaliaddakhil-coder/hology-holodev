@@ -110,5 +110,32 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     response.json({ session: publicSession(data.session) });
   });
 
+  router.post('/forgot-password', async (request, response) => {
+    const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';
+    if (!email || !email.includes('@')) return void response.status(400).json({ error: 'Email tidak valid' });
+    const requestOrigin = typeof request.headers.origin === 'string' ? request.headers.origin.replace(/\/$/, '') : '';
+    const clientOrigin = config.clientOrigins.includes(requestOrigin) ? requestOrigin : config.clientOrigins[0];
+    const { error } = await createAnonClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${clientOrigin}/reset-password`,
+    });
+    if (error && isNetworkAuthError(error)) {
+      return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+    }
+    // Deliberately return the same response for existing and unknown accounts.
+    response.json({ message: 'Jika email terdaftar, tautan reset telah dikirim.' });
+  });
+
+  router.post('/reset-password', async (request, response) => {
+    const accessToken = typeof request.body?.accessToken === 'string' ? request.body.accessToken : '';
+    const password = typeof request.body?.password === 'string' ? request.body.password : '';
+    if (!accessToken) return void response.status(400).json({ error: 'Tautan reset tidak valid atau sudah kedaluwarsa' });
+    if (password.length < 8) return void response.status(400).json({ error: 'Kata sandi minimal 8 karakter' });
+    const { data, error } = await serviceClient.auth.getUser(accessToken);
+    if (error || !data.user) return void response.status(401).json({ error: 'Tautan reset tidak valid atau sudah kedaluwarsa' });
+    const { error: updateError } = await serviceClient.auth.admin.updateUserById(data.user.id, { password });
+    if (updateError) return void response.status(400).json({ error: updateError.message });
+    response.json({ message: 'Kata sandi berhasil diperbarui.' });
+  });
+
   return router;
 };

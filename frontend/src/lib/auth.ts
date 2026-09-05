@@ -66,6 +66,8 @@ async function json<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const authApi = {
   login: (identity: string, password: string) => json<{ user: AuthUser; session: Session }>("/auth/login", { method: "POST", body: JSON.stringify({ identity, password }) }),
   register: (payload: { displayName: string; identity: string; password: string; role: string }) => json<{ user: AuthUser; session: Session | null; requiresVerification: boolean }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
+  forgotPassword: (email: string) => json<{ message: string }>("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+  resetPassword: (accessToken: string, password: string) => json<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify({ accessToken, password }) }),
 };
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

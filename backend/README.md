@@ -6,7 +6,7 @@ Express 5 + TypeScript API for the RembukTani M2 decision-support vertical slice
 
 1. Copy `.env.example` to `.env` or `.env.local`.
 2. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
-3. Apply `migrations/001_init_rembuktani_schema.sql`, then `migrations/002_decision_record_audit_and_assessment_evidence.sql` in Supabase.
+3. Apply `migrations/001_init_rembuktani_schema.sql`, then `migrations/002_decision_record_audit_and_assessment_evidence.sql`, then `migrations/003_simplify_profile_roles.sql` in Supabase.
 4. Install dependencies with `npm install`.
 
 ## Commands
@@ -34,7 +34,7 @@ Except `/api/health`, `/api/docs`, and `/api/openapi.yaml`, API requests require
 Authorization: Bearer <Supabase Auth access token>
 ```
 
-The backend validates the token with Supabase Auth, resolves the matching `profiles` row, and derives the acting profile from the token. Client-supplied `owner_id`, `created_by`, `decided_by`, and `reviewer_id` values are not trusted. Admin profiles may access other profiles' land records; regular profiles are restricted to their own land and decision cases.
+The backend validates the token with Supabase Auth, resolves the matching `profiles` row, and derives the acting profile from the token. Client-supplied `owner_id`, `created_by`, `decided_by`, and `reviewer_id` values are not trusted. Profiles are restricted to their own land and decision cases. Profiles with role `reviewer` may submit trusted reviews on any decision case.
 
 The backend uses the service-role key only server-side. Never expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend. The frontend should use Supabase Auth with the anon key, then send the access token to this API.
 

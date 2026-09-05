@@ -10,7 +10,7 @@ export interface Profile {
   id: string; // UUID
   user_id: string; // UUID (FK to auth.users)
   display_name: string;
-  role: 'farmer' | 'farmer_group_leader' | 'ppl' | 'admin';
+  role: 'farmer' | 'reviewer';
   avatar_url?: string;
   created_at: string; // ISO timestamp
   updated_at: string; // ISO timestamp

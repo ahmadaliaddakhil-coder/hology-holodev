@@ -36,7 +36,7 @@ export class BigBoundaryClient {
 
     const params = new URLSearchParams({
       where: '1=1',
-      geometry: `${coordinates.lon},${coordinates.lat}`,
+      geometry: JSON.stringify({ x: coordinates.lon, y: coordinates.lat }),
       geometryType: 'esriGeometryPoint',
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
@@ -79,6 +79,7 @@ export class BigBoundaryClient {
       district: firstString(attributes, ['WADMKC', 'KECAMATAN']),
       regency: firstString(attributes, ['WADMKK', 'KABKOTA', 'KOTAKAB']),
       province: firstString(attributes, ['WADMPR', 'PROVINSI']),
+      adm4Candidate: firstString(attributes, ['KDEPUM', 'KDEBPS']),
     };
   }
 }

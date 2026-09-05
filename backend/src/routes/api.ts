@@ -4,6 +4,7 @@ import { assertProfileAccess, currentProfileId } from '../shared/auth.js';
 import { BmkgAdapter } from '../infrastructure/bmkg/bmkg-adapter.js';
 import { BigBoundaryClient } from '../infrastructure/location/big-boundary-client.js';
 import { BmkgAdm4Verifier } from '../infrastructure/location/bmkg-adm4-verifier.js';
+
 import { WaterReasoningEngine } from '../infrastructure/reasoning/water-reasoning-engine.js';
 import { formatDecisionBrief } from '../infrastructure/sharing/decision-brief-formatter.js';
 import type { BmkgCanonicalEvidence } from '../infrastructure/bmkg/bmkg.types.js';
@@ -54,7 +55,7 @@ const growthStages = new Set<GrowthStage>(['vegetative', 'flowering', 'ripening'
 const decisionTypes = new Set<DecisionType>(['selected_option', 'custom', 'deferred']);
 const basisStrengths = new Set<BasisStrength>(['high', 'medium', 'low', 'insufficient']);
 const trustedReviewStatuses = new Set<TrustedReviewStatus>(['approve', 'modify', 'reject']);
-const reviewerRoles = new Set(['ppl', 'farmer_group_leader', 'admin']);
+const isReviewerRole = (role: string | undefined): boolean => role === 'reviewer';
 
 function bodyOf(request: Request): Record<string, unknown> {
   return request.body as Record<string, unknown>;
@@ -85,7 +86,7 @@ function sendError(response: Response, error: unknown): void {
   const message = error instanceof Error ? error.message : 'Request failed';
   const status = error instanceof Error && error.name === 'ForbiddenError'
     ? 403
-    : message.endsWith('is required') || message.includes('has an invalid value') || message.includes('must be')
+    : message.endsWith('is required') || message.includes('has an invalid value') || message.includes('must be') || message.includes('could not be resolved')
       ? 400
       : 500;
   response.status(status).json({ error: message });
@@ -107,6 +108,7 @@ export function createApiRouter(
   const reasoningEngine = dependencies.reasoningEngine ?? new WaterReasoningEngine();
   const boundaryClient = dependencies.boundaryClient ?? new BigBoundaryClient();
   const adm4Verifier = dependencies.adm4Verifier ?? new BmkgAdm4Verifier();
+
 
   const ensureLandAccess = async (request: Request, landId: string): Promise<void> => {
     const land = await repositories.lands.getById(landId);
@@ -146,8 +148,94 @@ export function createApiRouter(
         location_source: typeof body.location_source === 'string' ? body.location_source : undefined,
         archived_at: undefined,
       };
-      const land = await repositories.lands.createLand(input.owner_id, input);
-      response.status(201).json(land);
+      const adm4 = input.adm4_code;
+      const hasManualLocation = [input.province, input.regency, input.district, input.village]
+        .every((value) => typeof value === 'string' && value.trim() !== '');
+      let resolvedLocation:
+        | {
+            province: string;
+            regency: string;
+            district: string;
+            village: string;
+            location_source: string;
+          }
+        | undefined;
+
+      if (adm4) {
+        try {
+          const verification = await adm4Verifier.verify(adm4);
+          const location = verification.location;
+          const bmkgLocation = {
+            province: typeof location.provinsi === 'string' ? location.provinsi : '',
+            regency: typeof location.kotkab === 'string' ? location.kotkab : '',
+            district: typeof location.kecamatan === 'string' ? location.kecamatan : '',
+            village: typeof location.desa === 'string' ? location.desa : '',
+            location_source: 'bmkg_verified',
+          };
+          if (Object.values(bmkgLocation).some((value) => typeof value === 'string' && value === '')) {
+            throw new Error('BMKG location is incomplete');
+          }
+          resolvedLocation = bmkgLocation;
+        } catch {
+          try {
+            const boundaryCandidate = await boundaryClient.findContainingPoint({
+              lat: input.latitude,
+              lon: input.longitude,
+            });
+            const bigLocation = {
+              province: boundaryCandidate.province ?? '',
+              regency: boundaryCandidate.regency ?? '',
+              district: boundaryCandidate.district ?? '',
+              village: boundaryCandidate.village ?? '',
+              location_source: 'big_boundary_candidate',
+            };
+            if (Object.values(bigLocation).some((value) => typeof value === 'string' && value === '')) {
+              throw new Error('BIG location is incomplete');
+            }
+            resolvedLocation = bigLocation;
+          } catch {
+            if (!hasManualLocation) {
+              throw new Error(`adm4 could not be resolved: ${adm4}`);
+            }
+          }
+        }
+      }
+
+      const createdLand = await repositories.lands.createLand(input.owner_id, {
+        ...input,
+        ...(resolvedLocation ?? {}),
+      });
+      let resolvedLand = createdLand;
+      if (adm4 && resolvedLocation) {
+        resolvedLand = await repositories.lands.resolveLocation(createdLand.id, adm4, resolvedLocation);
+      } else if (adm4 && hasManualLocation) {
+        resolvedLand = await repositories.lands.updateLand(createdLand.id, {
+          location_source: input.location_source ?? 'client_provided',
+          location_resolved_at: new Date().toISOString(),
+        });
+      } else if (!adm4) {
+        try {
+          const boundaryCandidate = await boundaryClient.findContainingPoint({
+            lat: input.latitude,
+            lon: input.longitude,
+          });
+          resolvedLand = await repositories.lands.updateLand(createdLand.id, {
+            province: boundaryCandidate.province,
+            regency: boundaryCandidate.regency,
+            district: boundaryCandidate.district,
+            village: boundaryCandidate.village,
+            location_source: 'big_boundary_candidate',
+            location_resolved_at: new Date().toISOString(),
+          });
+        } catch {
+          resolvedLand = await repositories.lands.updateLand(createdLand.id, {
+            location_source: input.location_source ?? 'client_provided',
+            location_resolved_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      response.status(201).json(resolvedLand);
     } catch (error) {
       sendError(response, error);
     }
@@ -547,28 +635,33 @@ export function createApiRouter(
     try {
       const body = bodyOf(request);
       const decisionCaseId = requiredString(request.params.decisionCaseId, 'decisionCaseId');
-      await ensureCaseAccess(request, decisionCaseId);
-      const reviewerId = currentProfileId(request);
+      const actorId = currentProfileId(request);
       const status = body.status === undefined
         ? undefined
         : enumValue(body.status, 'status', trustedReviewStatuses);
 
       if (!status) {
+        // Farmer (case owner) requests a trusted review
+        await ensureCaseAccess(request, decisionCaseId);
         const updatedCase = await repositories.decisionCases.updateStatus(decisionCaseId, 'review_pending');
         response.status(202).json({ decision_case: updatedCase, status: 'review_pending' });
         return;
       }
 
-      if (!reviewerRoles.has(request.auth?.profile.role ?? '')) {
-        const error = new Error('Only trusted reviewer roles can submit a review');
+      // Only reviewer role can submit approve/reject
+      if (!isReviewerRole(request.auth?.profile.role)) {
+        const error = new Error('Only reviewer role can submit a review');
         error.name = 'ForbiddenError';
         throw error;
       }
 
+      const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
+      if (!decisionCase) throw new Error('Decision case not found');
+
       const input: CreateTrustedReviewInput = {
         decision_case_id: decisionCaseId,
         assessment_id: typeof body.assessment_id === 'string' ? body.assessment_id : undefined,
-        reviewer_id: reviewerId,
+        reviewer_id: actorId,
         status,
         comment: typeof body.comment === 'string' ? body.comment : undefined,
       };

@@ -35,10 +35,37 @@ app.use(
   }),
 );
 
-// Supabase currently uses the backend root as its Site URL. Forward confirmed
-// users to the PWA instead of leaving them on the API's JSON 404 response.
+// Supabase currently uses the backend root as its Site URL. This tiny browser-side
+// bridge is intentional: URL fragments (where Supabase puts recovery tokens) are
+// never sent to the server and would be lost by a normal HTTP redirect.
 app.get('/', (_request, response) => {
-  response.redirect(302, `${authLandingOrigin}/login?verified=1`);
+  const clientOrigin = JSON.stringify(authLandingOrigin);
+  response
+    .status(200)
+    .set({
+      'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'",
+      'Referrer-Policy': 'no-referrer',
+    })
+    .type('html')
+    .send(`<!doctype html>
+<html lang="id">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RembukTani</title></head>
+  <body>
+    <p>Mengarahkan ke aplikasi RembukTani...</p>
+    <script>
+      (() => {
+        const clientOrigin = ${clientOrigin};
+        const hash = window.location.hash || '';
+        const query = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+        const isRecovery = query.get('type') === 'recovery' || hashParams.get('type') === 'recovery' || hashParams.has('access_token');
+        const destination = isRecovery ? '/reset-password' : '/login?verified=1';
+        window.location.replace(clientOrigin + destination + (isRecovery ? window.location.search + hash : ''));
+      })();
+    </script>
+  </body>
+</html>`);
 });
 
 app.get('/api/health', (_request, response) => {

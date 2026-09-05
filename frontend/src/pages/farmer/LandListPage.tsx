@@ -41,8 +41,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         <nav className="space-y-1">
           <a href="/farmer/dashboard" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><Warehouse size={18} /> Beranda</a>
           <a href="/farmer/lands" className="flex w-full items-center gap-3 rounded-xl bg-[#213014] px-4 py-3 font-display text-sm font-bold text-white"><Sprout size={18} /> Lahan</a>
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><History size={18} /> Riwayat</button>
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><UserCircle2 size={18} /> Profil</button>
+          <a href="/farmer/history" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><History size={18} /> Riwayat</a>
+          <a href="/farmer/profile" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]"><UserCircle2 size={18} /> Profil</a>
         </nav>
       </div>
       <div className="space-y-4 px-1"><div className="flex items-center gap-3 rounded-xl bg-[#e9fcb5] p-3"><span className="size-2.5 rounded-full bg-[#85c254]" /><div><p className="text-xs font-bold">Sinkronisasi BMKG</p><p className="text-xs text-[#44483f]">Data cuaca aktif</p></div></div><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div><div><p className="text-xs font-bold">Pak Slamet</p><p className="text-xs text-[#44483f]">Ketua Poktan</p></div></div><Settings size={18} className="text-[#44483f]" /></div></div>

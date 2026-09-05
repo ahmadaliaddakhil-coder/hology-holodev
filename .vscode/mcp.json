@@ -11,6 +11,10 @@
 		"my-mcp-server-665779e3": {
 			"url": "https://mcp.figma.com/mcp",
 			"type": "http"
+		},
+		"lovable": {
+			"type": "http",
+			"url": "https://mcp.lovable.dev/?src=settings"
 		}
 	},
 	"inputs": []

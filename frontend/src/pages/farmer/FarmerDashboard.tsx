@@ -127,8 +127,8 @@ export function FarmerDashboard() {
           <nav className="space-y-1">
             <NavItem icon={Warehouse} label="Beranda" active />
             <a href="/farmer/lands" className="block"><NavItem icon={Sprout} label="Lahan" /></a>
-            <NavItem icon={History} label="Riwayat" />
-            <NavItem icon={UserCircle2} label="Profil" />
+            <a href="/farmer/history" className="block"><NavItem icon={History} label="Riwayat" /></a>
+            <a href="/farmer/profile" className="block"><NavItem icon={UserCircle2} label="Profil" /></a>
           </nav>
         </div>
         <div className="space-y-4 px-1">

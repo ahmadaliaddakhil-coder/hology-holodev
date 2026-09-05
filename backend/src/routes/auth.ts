@@ -121,6 +121,18 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     if (error && isNetworkAuthError(error)) {
       return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
     }
+    if (error?.status === 429 || error?.code === 'over_email_send_rate_limit') {
+      return void response.status(429).json({
+        error: 'Batas pengiriman email tercapai. Tunggu hingga satu jam, lalu minta tautan reset baru.',
+      });
+    }
+    if (error) {
+      console.error('Supabase password recovery failed', {
+        code: error.code,
+        message: error.message,
+        status: error.status,
+      });
+    }
     // Deliberately return the same response for existing and unknown accounts.
     response.json({ message: 'Jika email terdaftar, tautan reset telah dikirim.' });
   });

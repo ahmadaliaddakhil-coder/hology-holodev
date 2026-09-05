@@ -21,6 +21,7 @@ lahan dan BMKG Public Forecast API aktual.
 - `CROSS_ROLE_REVIEW.md`
 - `HANDOFF_FULLSTACK.md`
 - `TEST_REPORT.md`
+- `AI_DATA_POST_MERGE_AUDIT_2026-09-05.md`
 
 Artefak executable berada di `data/evidence/v0.2/`.
 

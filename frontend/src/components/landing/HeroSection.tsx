@@ -111,7 +111,7 @@ export function HeroSection() {
               tanpa asumsi buta.
             </p>
             <div>
-              <Link to="/app">
+              <Link to="/register">
                 <Button variant="accent" className="px-5 py-3.5 text-base">
                   Mulai dengan RembukTani
                   <ArrowRight className="size-3.5" aria-hidden />

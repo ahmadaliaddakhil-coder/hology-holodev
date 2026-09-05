@@ -12,7 +12,7 @@ const requiredEnvironment = (name: string): string => {
 
 export const config = {
   port: Number(process.env.PORT ?? 3000),
-  clientOrigins: (process.env.CLIENT_ORIGIN ?? 'http://localhost:5173,http://localhost:5174,http://localhost:8443')
+  clientOrigins: (process.env.CLIENT_ORIGIN ?? 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:8443,http://127.0.0.1:8443')
     .split(',')
     .map((origin) => origin.trim().replace(/^['"]|['"]$/g, '').replace(/\/$/, ''))
     .filter(Boolean),

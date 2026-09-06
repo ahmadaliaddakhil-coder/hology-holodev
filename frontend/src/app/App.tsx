@@ -14,10 +14,15 @@ import { HomePage } from "../pages/HomePage";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
-import { FieldSummaryPage } from "../pages/farmer/FieldSummaryPage";
 import { ProfilePage } from "../pages/farmer/ProfilePage";
 import HistoryPage from "../pages/farmer/HistoryPage";
 import { HistoryDetailPage } from "../pages/farmer/HistoryDetailPage";
+import { ConditionWaterPage } from "../pages/farmer/ConditionWaterPage";
+import { ConditionSummaryPage } from "../pages/farmer/ConditionSummaryPage";
+import { ActionAlternativesPage } from "../pages/farmer/ActionAlternativesPage";
+import { OptionalReviewPage } from "../pages/farmer/OptionalReviewPage";
+import { SelectReviewerPage } from "../pages/farmer/SelectReviewerPage";
+import { FinalDecisionPage } from "../pages/farmer/FinalDecisionPage";
 
 function App() {
   return (
@@ -34,7 +39,12 @@ function App() {
         <Route path="/farmer/lands/:landId" element={<ProtectedRoute><LandDetailPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId/review" element={<ProtectedRoute><LandReviewPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId/irrigation" element={<ProtectedRoute><IrrigationPulsePage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/summary" element={<ProtectedRoute><FieldSummaryPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/condition" element={<ProtectedRoute><ConditionWaterPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/summary" element={<ProtectedRoute><ConditionSummaryPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/action-alternatives" element={<ProtectedRoute><ActionAlternativesPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/optional-review" element={<ProtectedRoute><OptionalReviewPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/select-reviewer" element={<ProtectedRoute><SelectReviewerPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/final-decision" element={<ProtectedRoute><FinalDecisionPage /></ProtectedRoute>} />
         
         <Route path="/farmer/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         

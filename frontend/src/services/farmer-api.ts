@@ -71,8 +71,7 @@ export type ApiDecisionRecordContext = ApiDecisionRecord & {
   decision_case?: ApiDecisionCase;
   assessment?: { summary?: string; basis_strength?: string; factors?: string[]; limitations?: string[] };
   evidence?: { evidence?: ApiEvidence }[];
-  brief?: { id: string; content: string }[];
-  decided_by?: ApiProfile;
+  brief?: { id: string; content: string } | { id: string; content: string }[];
 };
 
 export type ApiProfile = {

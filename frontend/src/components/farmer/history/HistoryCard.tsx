@@ -103,7 +103,7 @@ export default function HistoryCard({
           <StatusBadge status={item.status} />
 
           <a
-            href={"/history/detail/test"}
+            href={`/farmer/history/${item.id}`}
             className="rounded-xl bg-[#f3f3ec] px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-[#e9fcb5] active:scale-95"
           >
             Lihat Risalah →
@@ -209,7 +209,7 @@ export default function HistoryCard({
             )}
 
             <a
-              href={"/farmer/history/test"}
+              href={`/farmer/history/${item.id}`}
               className="rounded-xl bg-[#15240a] px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#364c23] active:scale-95"
             >
               Lihat Risalah →

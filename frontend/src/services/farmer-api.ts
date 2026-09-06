@@ -67,8 +67,30 @@ export type ApiDecisionRecord = {
   is_mock?: boolean;
   created_at: string;
 };
+export type ApiDecisionRecordContext = ApiDecisionRecord & {
+  decision_case?: ApiDecisionCase;
+  assessment?: { summary?: string; basis_strength?: string; factors?: string[]; limitations?: string[] };
+  evidence?: { evidence?: ApiEvidence }[];
+  brief?: { id: string; content: string }[];
+  decided_by?: ApiProfile;
+};
+
+export type ApiProfile = {
+  id: string;
+  user_id: string;
+  display_name: string;
+  role: "farmer" | "reviewer";
+  avatar_url?: string;
+  email?: string;
+  phone?: string;
+  email_confirmed_at?: string;
+  last_sign_in_at?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export const farmerApi = {
+  getProfile: () => apiFetch<ApiProfile>("/profile"),
   listLands: () => apiFetch<ApiLand[]>("/lands"),
   getLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`),
   createLand: (payload: CreateLandPayload) => apiFetch<ApiLand>("/lands", { method: "POST", body: JSON.stringify(payload) }),
@@ -78,5 +100,6 @@ export const farmerApi = {
     apiFetch<ApiCropContext>(`/lands/${landId}/crops`, { method: "POST", body: JSON.stringify(payload) }),
   listDecisionCases: () => apiFetch<ApiDecisionCase[]>("/decision-cases"),
   listDecisionRecords: () => apiFetch<ApiDecisionRecord[]>("/decision-records"),
+  getDecisionRecord: (recordId: string) => apiFetch<ApiDecisionRecordContext>(`/decision-records/${recordId}`),
   listEvidence: (decisionCaseId: string) => apiFetch<ApiEvidence[]>(`/decision-cases/${decisionCaseId}/evidence`),
 };

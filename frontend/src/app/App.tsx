@@ -33,13 +33,13 @@ function App() {
         <Route path="/farmer/lands/new/details" element={<ProtectedRoute><CropContextPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId" element={<ProtectedRoute><LandDetailPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId/review" element={<ProtectedRoute><LandReviewPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/irrigation" element={<IrrigationPulsePage />} />
-        <Route path="/farmer/lands/:landId/summary" element={<FieldSummaryPage />} />
+        <Route path="/farmer/lands/:landId/irrigation" element={<ProtectedRoute><IrrigationPulsePage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/summary" element={<ProtectedRoute><FieldSummaryPage /></ProtectedRoute>} />
         
-        <Route path="/farmer/profile" element={<ProfilePage />} />
+        <Route path="/farmer/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         
-        <Route path="/farmer/history" element={<HistoryPage />} />
-        <Route path="/farmer/history/:historyId" element={<HistoryDetailPage />} />
+        <Route path="/farmer/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+        <Route path="/farmer/history/:historyId" element={<ProtectedRoute><HistoryDetailPage /></ProtectedRoute>} />
         
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

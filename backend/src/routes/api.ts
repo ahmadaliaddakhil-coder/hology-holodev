@@ -122,6 +122,18 @@ export function createApiRouter(
     await ensureLandAccess(request, decisionCase.land_id);
   };
 
+  router.get('/profile', (request, response) => {
+    const profile = request.auth!.profile;
+    const user = request.auth!.user;
+    response.json({
+      ...profile,
+      email: user.email ?? null,
+      phone: user.phone ?? null,
+      email_confirmed_at: user.email_confirmed_at ?? null,
+      last_sign_in_at: user.last_sign_in_at ?? null,
+    });
+  });
+
   router.get('/lands', async (request, response) => {
     try {
       const ownerId = currentProfileId(request);

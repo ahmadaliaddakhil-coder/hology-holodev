@@ -22,7 +22,7 @@ export function CropContextPage() {
   const [days, setDays] = useState(55);
   const [cropName] = useState("Padi Sawah");
   const [variety] = useState("Inpari 32 HDB");
-  const [note, setNote] = useState("Tinggi genangan air rata-rata saat ini macak-macak (1–2 cm), tidak terlihat bercak coklat wereng, air inlet lancar dari parit blok timur.");
+  const [note, setNote] = useState("");
   const [notice, setNoticeState] = useState("");
   const [, setSaving] = useState(false);
 

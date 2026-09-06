@@ -74,6 +74,20 @@ export type ApiDecisionRecordContext = ApiDecisionRecord & {
   brief?: { id: string; content: string } | { id: string; content: string }[];
 };
 
+export type ApiAssessment = {
+  id: string;
+  decision_case_id: string;
+  summary: string;
+  basis_strength?: string;
+  factors?: string[];
+  missing_evidence?: string[];
+  limitations?: string[];
+  rule_version?: string;
+};
+
+export type ApiActionOption = { id: string; title: string; description?: string; rationale?: string; display_order: number };
+export type ApiAssessmentResult = { assessment: ApiAssessment; options: ApiActionOption[]; reasoning?: Record<string, unknown> };
+
 export type ApiProfile = {
   id: string;
   user_id: string;
@@ -98,6 +112,13 @@ export const farmerApi = {
   createCrop: (landId: string, payload: { crop_name: string; variety_name?: string; growth_stage: ApiCropContext["growth_stage"]; planting_date?: string }) =>
     apiFetch<ApiCropContext>(`/lands/${landId}/crops`, { method: "POST", body: JSON.stringify(payload) }),
   listDecisionCases: () => apiFetch<ApiDecisionCase[]>("/decision-cases"),
+  createDecisionCase: (payload: { land_id: string; crop_context_id: string; decision_type: string }) =>
+    apiFetch<ApiDecisionCase>("/decision-cases", { method: "POST", body: JSON.stringify(payload) }),
+  refreshBmkg: (caseId: string) => apiFetch<{ evidence: ApiEvidence; delivery: "live" | "cached" }>(`/decision-cases/${caseId}/bmkg/refresh`, { method: "POST" }),
+  createFieldPulse: (caseId: string, payload: { water_presence: string; irrigation_flow: string; reported_by?: string; observed_at?: string; is_mock?: boolean }) =>
+    apiFetch<ApiEvidence>(`/decision-cases/${caseId}/field-pulse`, { method: "POST", body: JSON.stringify(payload) }),
+  assess: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assess`, { method: "POST" }),
+  getAssessment: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assessment`),
   listDecisionRecords: () => apiFetch<ApiDecisionRecord[]>("/decision-records"),
   getDecisionRecord: (recordId: string) => apiFetch<ApiDecisionRecordContext>(`/decision-records/${recordId}`),
   listEvidence: (decisionCaseId: string) => apiFetch<ApiEvidence[]>(`/decision-cases/${decisionCaseId}/evidence`),

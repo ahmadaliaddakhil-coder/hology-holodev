@@ -70,7 +70,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           <span className="size-2.5 rounded-full bg-[#85c254]" />
           <div>
             <p className="text-xs font-bold">Sinkronisasi BMKG</p>
-            <p className="text-xs text-[#44483f]">Data cuaca aktif</p>
+            <p className="text-xs text-[#44483f]">Aktif setelah ADM4 terverifikasi</p>
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -79,8 +79,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
               <UserCircle2 size={15} />
             </div>
             <div>
-              <p className="text-xs font-bold">Pak Slamet</p>
-              <p className="text-xs text-[#44483f]">Ketua Poktan</p>
+              <p className="text-xs font-bold">Akun aktif</p>
+              <p className="text-xs text-[#44483f]">Data dari sesi login</p>
             </div>
           </div>
           <Settings size={18} className="text-[#44483f]" />
@@ -120,11 +120,11 @@ export function AddLandPage() {
             <Menu size={22} />
           </button>
           <span className="rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">
-            Wilayah: Subak Jatiluwih
+            Lokasi dipilih pada langkah berikutnya
           </span>
           <div className="flex items-center gap-3 sm:gap-4">
             <span className="hidden items-center gap-2 text-xs font-semibold text-[#44483f] sm:flex">
-              <CloudSun size={18} /> Cerah Berawan 28°C
+              <CloudSun size={18} /> BMKG setelah lokasi terverifikasi
             </span>
             <Bell size={17} className="text-[#44483f]" />
             <div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white">

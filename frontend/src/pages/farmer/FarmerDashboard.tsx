@@ -4,19 +4,21 @@ import { Bell, ChevronRight, CloudSun, FileCheck2, History, Leaf, Menu, Plus, Re
 import { Link } from "react-router-dom";
 import { getUser } from "../../lib/auth";
 import { farmerApi, type ApiCropContext, type ApiDecisionCase, type ApiDecisionRecord, type ApiEvidence, type ApiLand } from "../../services/farmer-api";
+import { WeatherStatus } from "../../components/farmer/WeatherStatus";
 
 const heroImage = "https://www.figma.com/api/mcp/asset/3b17483f-6278-487e-b29e-3726fe9fcd12.png";
 const fieldImages = ["https://www.figma.com/api/mcp/asset/864611c8-3b58-4444-8606-6186e6a5b233.png", "https://www.figma.com/api/mcp/asset/9b5fa1e3-c8f4-47b4-9d19-270f04e08bb6.png"];
 type DashboardData = { lands: ApiLand[]; crops: Record<string, ApiCropContext | null>; cases: ApiDecisionCase[]; evidence: ApiEvidence[]; decisions: ApiDecisionRecord[] };
 type FilterKey = "all" | "attention" | "flowering" | "vegetative";
-type ForecastSlot = { weather_desc?: string; t?: number; target_time_local?: string };
+type ForecastSlot = { weather_desc?: string; t?: number; target_time_utc?: string; target_time_local?: string };
 const stages: Record<ApiCropContext["growth_stage"], string> = { vegetative: "Fase Vegetatif", flowering: "Fase Berbunga", ripening: "Fase Pematangan", unknown: "Fase belum diketahui" };
 const pendingStatuses = new Set<ApiDecisionCase["status"]>(["draft", "collecting_evidence", "assessed", "review_pending", "ready_for_decision"]);
 const formatDate = (value: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 const greeting = () => { const hour = new Date().getHours(); return hour < 11 ? "Selamat Pagi" : hour < 15 ? "Selamat Siang" : hour < 18 ? "Selamat Sore" : "Selamat Malam"; };
 const forecastFrom = (item?: ApiEvidence): ForecastSlot | null => {
-  const canonical = item?.payload as { payload?: { forecast_slots?: ForecastSlot[] } } | undefined;
-  return canonical?.payload?.forecast_slots?.find((slot) => new Date(slot.target_time_local ?? 0).getTime() >= Date.now()) ?? canonical?.payload?.forecast_slots?.[0] ?? null;
+  const canonical = item?.payload as { forecast_slots?: ForecastSlot[]; payload?: { forecast_slots?: ForecastSlot[] } } | undefined;
+  const slots = canonical?.forecast_slots ?? canonical?.payload?.forecast_slots;
+  return slots?.find((slot) => new Date(slot.target_time_utc ?? slot.target_time_local ?? 0).getTime() >= Date.now()) ?? slots?.[0] ?? null;
 };
 const fetchDashboardData = async (): Promise<DashboardData> => {
   const [lands, cases, decisions] = await Promise.all([farmerApi.listLands(), farmerApi.listDecisionCases(), farmerApi.listDecisionRecords()]);
@@ -75,13 +77,13 @@ export function FarmerDashboard() {
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col justify-between bg-[#fafaf6] p-5 shadow-sm transition-transform duration-300 ${mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
       <div><div className="mb-6 flex items-center justify-between px-2"><div className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white"><Leaf size={15} className="text-[#85c254]" /> REMBUKTANI</div><button className="md:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu"><X size={20} /></button></div>
         <Link to="/farmer/lands/new" className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#85c254] px-4 py-3 text-sm font-semibold"><Plus size={16} /> Tambah Lahan</Link>
-        <nav className="space-y-1"><Link to="/farmer/dashboard"><NavItem icon={Warehouse} label="Beranda" active /></Link><Link to="/farmer/lands"><NavItem icon={Sprout} label="Lahan" /></Link><NavItem icon={History} label="Riwayat" /><NavItem icon={UserCircle2} label="Profil" /></nav>
+        <nav className="space-y-1"><Link to="/farmer/dashboard"><NavItem icon={Warehouse} label="Beranda" active /></Link><Link to="/farmer/lands"><NavItem icon={Sprout} label="Lahan" /></Link><Link to="/farmer/history"><NavItem icon={History} label="Riwayat" /></Link><Link to="/farmer/profile"><NavItem icon={UserCircle2} label="Profil" /></Link></nav>
       </div>
-      <div className="space-y-4 px-1"><div className="flex items-center gap-3 rounded-xl bg-[#e9fcb5] p-3"><span className={`size-2.5 rounded-full ${primaryEvidence ? "bg-[#4f8a45]" : "bg-[#b98532]"}`} /><div><p className="text-xs font-bold">Sinkronisasi BMKG</p><p className="text-xs text-[#44483f]">{primaryEvidence ? `${primaryEvidence.freshness_status ?? "status belum dinilai"}${primaryEvidence.is_mock ? " · data demo" : " · data resmi"}` : "Belum ada bukti cuaca"}</p></div></div>
+      <div className="space-y-4 px-1"><div className="rounded-xl bg-[#e9fcb5] p-3"><p className="mb-2 text-xs font-bold">Cuaca lahan terdekat</p><WeatherStatus preferredLandId={primaryLand?.id} /></div>
         <div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div><div><p className="max-w-36 truncate text-xs font-bold">{displayName}</p><p className="text-xs text-[#44483f]">{user?.role === "reviewer" ? "Reviewer" : "Petani"}</p></div></div><Settings size={18} /></div></div>
     </aside>
     <div className="md:pl-[260px]">
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMobileNavOpen(true)} aria-label="Buka menu"><Menu size={22} /></button><span className="max-w-[55%] truncate rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">Wilayah: {primaryRegion}</span><div className="flex items-center gap-3"><span className="hidden items-center gap-2 text-xs font-semibold sm:flex"><CloudSun size={18} /> {primaryForecast ? `${primaryForecast.weather_desc ?? "Cuaca tersedia"}${typeof primaryForecast.t === "number" ? ` ${primaryForecast.t}°C` : ""}` : "BMKG belum tersedia"}</span><Bell size={17} /><UserCircle2 size={20} /></div></header>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMobileNavOpen(true)} aria-label="Buka menu"><Menu size={22} /></button><span className="max-w-[55%] truncate rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">Wilayah: {primaryRegion}</span><div className="flex items-center gap-3"><span className="hidden sm:flex"><WeatherStatus preferredLandId={primaryLand?.id} /></span><Bell size={17} /><UserCircle2 size={20} /></div></header>
       <main className="mx-auto max-w-[1200px] space-y-8 px-4 py-8 sm:px-8 lg:py-10">
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative min-h-[288px] overflow-hidden rounded-2xl bg-[#15240a] shadow-xl"><img src={heroImage} alt="Lanskap pertanian" className="absolute inset-0 size-full object-cover opacity-75" /><div className="absolute inset-0 bg-gradient-to-r from-[#15240a]/90 via-[#15240a]/35 to-transparent" /><div className="relative flex min-h-[288px] flex-col justify-end p-6 sm:p-8"><div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#98cf6a]"><span className="rounded-full bg-[#85c254]/20 px-3 py-1.5">● {primaryEvidence ? `BMKG ${primaryEvidence.is_mock ? "Demo" : "Resmi"}` : "Menunggu sinkronisasi BMKG"}</span>{primaryEvidence?.observed_at && <span>· Diperbarui {formatDate(primaryEvidence.observed_at)}</span>}</div><p className="text-base text-[#bacda5]">{greeting()}, {displayName}</p><h1 className="mt-1 max-w-2xl font-display text-3xl font-extrabold text-white sm:text-4xl">Lahan mana yang ingin Anda tinjau?</h1><p className="mt-2 max-w-xl text-sm text-[#deded4]/90">Pilih petak untuk memeriksa bukti yang tersedia dan memulai rembuk keputusan.</p></div></motion.section>
         {state === "loading" && <div className="grid gap-6 lg:grid-cols-2" aria-label="Memuat dashboard"><div className="h-96 animate-pulse rounded-2xl bg-[#deded4]" /><div className="h-96 animate-pulse rounded-2xl bg-[#deded4]" /></div>}

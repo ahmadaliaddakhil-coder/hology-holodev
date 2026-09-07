@@ -13,6 +13,7 @@ export type ApiLand = {
   village?: string;
   adm4_code?: string;
   location_source?: string;
+  boundary_polygon?: [number, number][];
   created_at: string;
   updated_at: string;
   crop_contexts?: ApiCropContext[];
@@ -31,7 +32,7 @@ export type ApiCropContext = {
 };
 
 export type CreateLandPayload = Pick<ApiLand, "name" | "latitude" | "longitude"> &
-  Partial<Pick<ApiLand, "description" | "province" | "regency" | "district" | "village" | "adm4_code" | "location_source">>;
+  Partial<Pick<ApiLand, "description" | "province" | "regency" | "district" | "village" | "adm4_code" | "location_source" | "boundary_polygon">>;
 
 export type ApiDecisionCase = {
   id: string;
@@ -56,6 +57,12 @@ export type ApiEvidence = {
   freshness_status?: "fresh" | "stale" | "expired";
   quality_status?: "high" | "medium" | "low" | "uncertain";
   is_mock: boolean;
+};
+
+export type ApiLandWeather = {
+  weather: ApiEvidence | null;
+  delivery?: "live" | "cached";
+  fetched_at?: string;
 };
 
 export type ApiDecisionRecord = {
@@ -107,8 +114,9 @@ export const farmerApi = {
   getProfile: () => apiFetch<ApiProfile>("/profile"),
   listLands: () => apiFetch<ApiLand[]>("/lands"),
   getLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`),
+  getLandWeather: (landId: string) => apiFetch<ApiLandWeather>(`/lands/${landId}/bmkg`),
   createLand: (payload: CreateLandPayload) => apiFetch<ApiLand>("/lands", { method: "POST", body: JSON.stringify(payload) }),
-  resolveLocation: (payload: { lat: number; lon: number; adm4: string }) => apiFetch<{ adm4Verification: { adm4: string; location: Record<string, unknown>; forecastSlotCount: number }; mappingVerified: boolean; mappingNote: string }>("/locations/resolve", { method: "POST", body: JSON.stringify(payload) }),
+  resolveLocation: (payload: { lat: number; lon: number; adm4?: string }) => apiFetch<{ boundaryCandidate: { village?: string; district?: string; regency?: string; province?: string; adm4Candidate?: string }; adm4Verification: { adm4: string; location: Record<string, unknown>; forecastSlotCount: number } | null; mappingVerified: boolean; mappingNote: string }>("/locations/resolve", { method: "POST", body: JSON.stringify(payload) }),
   archiveLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`, { method: "DELETE" }),
   getActiveCrop: (landId: string) => apiFetch<ApiCropContext>(`/lands/${landId}/crop-context`),
   createCrop: (landId: string, payload: { crop_name: string; variety_name?: string; growth_stage: ApiCropContext["growth_stage"]; planting_date?: string }) =>

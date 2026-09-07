@@ -45,20 +45,26 @@ export class BigBoundaryClient {
       f: 'json',
     });
 
-    let response: Response;
-    try {
-      response = await this.fetcher(`${this.endpoint}?${params}`, {
-        headers: { accept: 'application/json' },
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch (error: unknown) {
-      throw new Error(
-        `BIG boundary request failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+    let response: Response | undefined;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        response = await this.fetcher(`${this.endpoint}?${params}`, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(25_000),
+        });
+        if (response.ok) break;
+        lastError = new Error(`HTTP ${response.status}`);
+        if (response.status < 500) break;
+      } catch (error: unknown) {
+        lastError = error;
+      }
     }
 
-    if (!response.ok) {
-      throw new Error(`BIG boundary request failed with HTTP ${response.status}`);
+    if (!response?.ok) {
+      throw new Error(
+        `BIG boundary request failed: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+      );
     }
 
     const body = (await response.json()) as BigResponse;

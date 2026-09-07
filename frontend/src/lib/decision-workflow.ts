@@ -12,7 +12,9 @@ export async function ensureAssessment(landId:string):Promise<WorkflowData>{
   if(!decisionCase) decisionCase=await farmerApi.createDecisionCase({land_id:landId,crop_context_id:crop.id,decision_type:"water_management"});
   let evidence=await farmerApi.listEvidence(decisionCase.id);
   const fieldPulse: Record<string, unknown> = (() => { try { return JSON.parse(sessionStorage.getItem(`field-pulse:${landId}`) || "{}"); } catch { return {}; } })();
-  if(!evidence.some(x=>x.type==="bmkg_forecast")&&land.adm4_code) await farmerApi.refreshBmkg(decisionCase.id);
+  if(!evidence.some(x=>x.type==="bmkg_forecast")&&land.adm4_code){
+    try{await farmerApi.refreshBmkg(decisionCase.id)}catch{ /* BMKG is optional evidence; the assessment can continue without it. */ }
+  }
   if(!evidence.some(x=>x.type==="field_pulse")){const profile=await farmerApi.getProfile();await farmerApi.createFieldPulse(decisionCase.id,{water_presence:String(fieldPulse.water_presence||"unknown"),irrigation_flow:String(fieldPulse.irrigation_flow||"unknown"),reported_by:profile.display_name,observed_at:new Date().toISOString(),is_mock:false});}
   evidence=await farmerApi.listEvidence(decisionCase.id); let result:ApiAssessmentResult;
   try{result=await farmerApi.getAssessment(decisionCase.id)}catch{result=await farmerApi.assess(decisionCase.id)}

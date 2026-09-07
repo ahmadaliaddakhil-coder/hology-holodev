@@ -10,6 +10,8 @@ export type LandDraft = {
   village?: string;
   adm4Code?: string;
   locationSource?: string;
+  boundaryPolygon?: [number, number][];
+  locationResolved?: boolean;
 };
 
 const KEY = "rembuktani.land-draft.v1";

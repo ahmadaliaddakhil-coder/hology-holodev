@@ -47,6 +47,7 @@ export type Database = {
           description: string | null
           latitude: number
           longitude: number
+          boundary_polygon: [number, number][] | null
           province: string | null
           regency: string | null
           district: string | null
@@ -83,6 +84,7 @@ export type Database = {
           description?: string | null
           latitude?: number
           longitude?: number
+          boundary_polygon?: [number, number][] | null
           province?: string | null
           regency?: string | null
           district?: string | null

@@ -29,6 +29,7 @@ export interface Land {
   description?: string;
   latitude: number; // DECIMAL(10, 8)
   longitude: number; // DECIMAL(11, 8)
+  boundary_polygon?: [number, number][];
   province?: string;
   regency?: string;
   district?: string;

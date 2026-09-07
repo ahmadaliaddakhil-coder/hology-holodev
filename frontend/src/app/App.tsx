@@ -13,6 +13,7 @@ import { RegisterPage } from "../pages/RegisterPage";
 import { HomePage } from "../pages/HomePage";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
+import { VerifyPhonePage } from "../pages/VerifyPhonePage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { ProfilePage } from "../pages/farmer/ProfilePage";
 import HistoryPage from "../pages/farmer/HistoryPage";
@@ -40,6 +41,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-phone" element={<VerifyPhonePage />} />
 
         {/* === RUTE KHUSUS PETANI (FARMER) === */}
         <Route path="/farmer/dashboard" element={<ProtectedRoute allowedRole="farmer"><FarmerDashboard /></ProtectedRoute>} />

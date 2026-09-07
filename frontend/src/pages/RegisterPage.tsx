@@ -31,9 +31,12 @@ export function RegisterPage() {
       const result = await authApi.register({ displayName, identity, password, role });
       if (result.session) {
         saveAuth(result.session, result.user, true);
-        navigate("/farmer/dashboard", { replace: true });
+        navigate(role === "reviewer" ? "/reviewer/dashboard" : "/farmer/dashboard", { replace: true });
+      } else if (result.verificationChannel === "whatsapp" && result.verificationTarget) {
+        sessionStorage.setItem("rembuktani.phone-verification.v1", JSON.stringify({ phone: result.verificationTarget }));
+        navigate("/verify-phone", { replace: true });
       } else {
-        setError("Akun dibuat. Periksa WhatsApp/email untuk verifikasi, lalu masuk.");
+        setError("Akun dibuat. Periksa email untuk verifikasi, lalu masuk.");
       }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Pendaftaran gagal");

@@ -39,6 +39,7 @@ export type ApiDecisionCase = {
   land_id: string;
   crop_context_id: string;
   decision_type: string;
+  selected_action_option_id?: string;
   status: "draft" | "collecting_evidence" | "assessed" | "review_pending" | "ready_for_decision" | "decided";
   created_at: string;
   updated_at: string;
@@ -130,7 +131,7 @@ export const farmerApi = {
     apiFetch<ApiEvidence>(`/decision-cases/${caseId}/field-pulse`, { method: "POST", body: JSON.stringify(payload) }),
   assess: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assess`, { method: "POST" }),
   getAssessment: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assessment`),
-  requestReview: (caseId: string) => apiFetch<{ status: "review_pending" }>(`/decision-cases/${caseId}/reviews`, { method: "POST", body: JSON.stringify({}) }),
+  requestReview: (caseId: string, payload?: { assessment_id?: string; selected_action_option_id?: string }) => apiFetch<{ decision_case: ApiDecisionCase; status: "review_pending" }>(`/decision-cases/${caseId}/reviews`, { method: "POST", body: JSON.stringify(payload ?? {}) }),
   listReviews: (caseId: string) => apiFetch<ApiTrustedReview[]>(`/decision-cases/${caseId}/reviews`),
   createDecision: (caseId: string, payload: { assessment_id: string; selected_action_option_id?: string; decision_type: "selected_option" | "custom" | "deferred"; decision_text: string; reason?: string; assessment_snapshot?: Record<string, unknown>; evidence_snapshot?: Record<string, unknown>; evidence_ids?: string[]; is_mock?: boolean }) => apiFetch<ApiDecisionRecord>(`/decision-cases/${caseId}/decision`, { method: "POST", body: JSON.stringify(payload) }),
   createBrief: (recordId: string) => apiFetch<{ id: string; content: string }>(`/decision-records/${recordId}/brief`, { method: "POST" }),

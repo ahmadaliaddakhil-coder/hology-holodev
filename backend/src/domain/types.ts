@@ -82,6 +82,7 @@ export interface DecisionCase {
   crop_context_id: string; // UUID (FK to crop_contexts)
   created_by: string; // UUID (FK to profiles)
   decision_type: string;
+  selected_action_option_id?: string;
   status: DecisionCaseStatus;
   created_at: string; // ISO timestamp
   updated_at: string; // ISO timestamp

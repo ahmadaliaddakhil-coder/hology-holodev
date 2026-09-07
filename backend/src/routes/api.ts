@@ -775,7 +775,19 @@ export function createApiRouter(
       if (!status) {
         // Farmer (case owner) requests a trusted review
         await ensureCaseAccess(request, decisionCaseId);
-        const updatedCase = await repositories.decisionCases.updateStatus(decisionCaseId, 'review_pending');
+        const assessmentId = typeof body.assessment_id === 'string' ? body.assessment_id : undefined;
+        const selectedOptionId = typeof body.selected_action_option_id === 'string' ? body.selected_action_option_id : undefined;
+        if (selectedOptionId) {
+          if (!assessmentId) throw new Error('assessment_id is required when selecting an action option');
+          const options = await repositories.actionOptions.getByAssessmentId(assessmentId);
+          if (!options.some((option) => option.id === selectedOptionId)) {
+            throw new Error('selected_action_option_id does not belong to the assessment');
+          }
+        }
+        const updatedCase = await repositories.decisionCases.updateCase(decisionCaseId, {
+          status: 'review_pending',
+          selected_action_option_id: selectedOptionId,
+        });
         response.status(202).json({ decision_case: updatedCase, status: 'review_pending' });
         return;
       }

@@ -157,6 +157,7 @@ export type Database = {
           crop_context_id: string
           created_by: string
           decision_type: string
+          selected_action_option_id: string | null
           status: string
           created_at: string
           updated_at: string
@@ -168,6 +169,7 @@ export type Database = {
           crop_context_id: string
           created_by: string
           decision_type: string
+          selected_action_option_id?: string | null
           status?: string
           created_at?: string
           updated_at?: string
@@ -179,6 +181,7 @@ export type Database = {
           crop_context_id?: string
           created_by?: string
           decision_type?: string
+          selected_action_option_id?: string | null
           status?: string
           created_at?: string
           updated_at?: string

@@ -8,7 +8,6 @@ import { farmerApi } from "../../services/farmer-api";
 
 type Point = [number, number];
 const DEFAULT_POSITION: Point = [-7.926976124, 112.6130137732];
-const text = (value: unknown) => typeof value === "string" ? value : "";
 const coordinate = (value: unknown, fallback: number) => {
   const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isFinite(parsed) ? parsed : fallback;

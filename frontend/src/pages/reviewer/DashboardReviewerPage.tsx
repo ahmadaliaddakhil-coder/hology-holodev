@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
     ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu,
-    Settings, Sprout, UserCircle2, Warehouse, History,
+    Settings, UserCircle2, Warehouse, History,
     CheckCircle2, ClipboardCheck, ChevronDown, AlertTriangle,
-    Clock, CloudRain, Check, X
+    X
 } from "lucide-react";
 import { getUser } from "../../lib/auth";
 import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";
@@ -138,7 +138,7 @@ export function DashboardReviewerPage() {
                             {/* Hero Section */}
                             <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold leading-tight text-[#15240a]">
-                                    Selamat datang, {user?.display_name || "Reviewer"}
+                                    Selamat datang, {data?.reviewer_name || user?.display_name || "Reviewer"}
                                 </h1>
                                 <p className="mt-3 text-xs sm:text-sm text-[#44483f] leading-relaxed max-w-2xl">
                                     Ada beberapa permintaan pertimbangan yang membutuhkan perhatian Anda sebelum petani mengambil keputusan penanganan air dan pemupukan.

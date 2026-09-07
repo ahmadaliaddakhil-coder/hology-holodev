@@ -120,6 +120,23 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     response.json({ session: publicSession(data.session) });
   });
 
+  router.post('/logout', async (request, response) => {
+    const authorization = typeof request.headers.authorization === 'string' ? request.headers.authorization : '';
+    const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+    if (!accessToken) return void response.status(400).json({ error: 'Access token wajib diisi' });
+
+    try {
+      const { error } = await serviceClient.auth.admin.signOut(accessToken, 'local');
+      // Logout is idempotent: an expired/already-revoked token is already signed out.
+      if (error && error.status !== 401) {
+        return void response.status(isNetworkAuthError(error) ? 503 : 400).json({ error: messageFor(error) });
+      }
+      response.status(204).send();
+    } catch (error) {
+      response.status(isNetworkAuthError(error) ? 503 : 400).json({ error: messageFor(error) });
+    }
+  });
+
   router.post('/forgot-password', async (request, response) => {
     const email = typeof request.body?.email === 'string' ? request.body.email.trim().toLowerCase() : '';
     if (!email || !email.includes('@')) return void response.status(400).json({ error: 'Email tidak valid' });

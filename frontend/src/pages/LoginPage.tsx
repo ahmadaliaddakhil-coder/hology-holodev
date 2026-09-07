@@ -14,6 +14,8 @@ export function LoginPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const verified = searchParams.get("verified") === "1";
+  const loggedOut = searchParams.get("loggedOut") === "1";
+  const localOnlyLogout = searchParams.get("localOnly") === "1";
 
   useEffect(() => {
     // 1. Cek recovery password (Reset Password)
@@ -157,6 +159,11 @@ export function LoginPage() {
             {verified && (
               <p className="rounded-xl border border-[#bbf7d0]/60 bg-[#f0fdf4] p-3 text-xs font-semibold text-[#166534]" role="status">
                 Email berhasil dikonfirmasi. Silakan masuk dengan akun Anda.
+              </p>
+            )}
+            {loggedOut && (
+              <p className="rounded-xl border border-[#bbf7d0]/60 bg-[#f0fdf4] p-3 text-xs font-semibold text-[#166534]" role="status">
+                {localOnlyLogout ? "Anda sudah keluar dari perangkat ini. Server autentikasi tidak terjangkau, sehingga sesi server akan berakhir sesuai masa berlakunya." : "Anda berhasil keluar. Sesi perangkat dan sesi server telah diakhiri."}
               </p>
             )}
 

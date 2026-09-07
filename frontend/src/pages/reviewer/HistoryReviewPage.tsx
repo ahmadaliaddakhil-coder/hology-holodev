@@ -6,6 +6,7 @@ import {
     Layers, ChevronDown, ChevronUp, ShieldCheck, CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -20,74 +21,6 @@ function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse
     );
 }
 
-// Data Mockup untuk Riwayat
-const historyData = [
-    {
-        id: "1",
-        title: "Blok Tirto A3",
-        location: "Kepanjen, Malang",
-        owner: "Pak Budi",
-        date: "7 September 2026",
-        status: "Selesai",
-        preview: "Sebaiknya periksa kondisi pintu air terlebih dahulu karena sumber air belum diketahui secara pasti dari sensor cuaca.",
-        assessment: {
-            status: "Kondisi perlu ditinjau",
-            desc: "Terjadi perbedaan kebutuhan air fase berbunga dengan kondisi saluran irigasi sekunder terbatas."
-        },
-        evidence: [
-            "BMKG (Cerah Berawan 24°C)",
-            "Kondisi Lapangan (Macak-macak)",
-            "Tanaman (Padi Inpari 32)"
-        ],
-        consideration: {
-            arah: "Perlu informasi tambahan",
-            catatan: "Sebaiknya periksa kondisi pintu air terlebih dahulu karena sumber air belum diketahui secara pasti dari sensor cuaca."
-        }
-    },
-    {
-        id: "2",
-        title: "Petak Bawah Timur #04",
-        location: "Karangploso, Malang",
-        owner: "Bu Ani",
-        date: "5 September 2026",
-        status: "Selesai",
-        preview: "Informasi tambahan diperlukan sebelum keputusan dibuat terkait jadwal giliran air subak.",
-        assessment: {
-            status: "Perlu konfirmasi cuaca",
-            desc: "Kondisi awan mendung tebal namun prediksi BMKG menunjukkan cerah berawan."
-        },
-        evidence: [
-            "BMKG (Potensi Hujan)",
-            "Kondisi Lapangan (Mendung tebal)"
-        ],
-        consideration: {
-            arah: "Perlu informasi tambahan",
-            catatan: "Informasi tambahan diperlukan sebelum keputusan dibuat terkait jadwal giliran air subak."
-        }
-    },
-    {
-        id: "3",
-        title: "Sawah Blok Kulon 02",
-        location: "Dau, Malang",
-        owner: "Pak Hadi",
-        date: "2 September 2026",
-        status: "Selesai",
-        preview: "Informasi cuaca dan genangan air sudah cukup jelas untuk melanjutkan penyiangan tahap...",
-        assessment: {
-            status: "Kondisi aman",
-            desc: "Kebutuhan air tercukupi dan fase vegetatif berjalan normal tanpa kendala."
-        },
-        evidence: [
-            "BMKG (Cerah)",
-            "Kondisi Lapangan (Genangan 3cm)"
-        ],
-        consideration: {
-            arah: "Informasi sudah cukup jelas",
-            catatan: "Informasi cuaca dan genangan air sudah cukup jelas untuk melanjutkan penyiangan tahap awal."
-        }
-    }
-];
-
 export function HistoryReviewPage() {
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -96,15 +29,31 @@ export function HistoryReviewPage() {
     // State untuk melacak Accordion mana yang terbuka
     // Secara default kita buka ID "1" seperti di desain
     const [expandedId, setExpandedId] = useState<string | null>("1");
+    const [data, setData] = useState<ApiReviewerDashboard | null>(null);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         const timer = setTimeout(() => setIsLoaded(true), 50);
+        reviewerApi.getDashboard().then(setData).catch((reason) => setError(reason instanceof Error ? reason.message : "Gagal memuat riwayat"));
         return () => clearTimeout(timer);
     }, []);
 
     const toggleAccordion = (id: string) => {
         setExpandedId(prev => (prev === id ? null : id));
     };
+
+    const historyData = (data?.completed_reviews ?? []).map((review) => ({
+        id: review.review_id,
+        title: review.land_name,
+        location: review.village,
+        owner: review.farmer_name,
+        date: new Date(review.responded_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }),
+        status: "Selesai",
+        preview: review.comment || "Tidak ada catatan tambahan.",
+        assessment: { status: review.assessment?.basis_strength || "Belum dinilai", desc: review.assessment?.summary || "Assessment tidak tersedia." },
+        evidence: review.evidence_labels,
+        consideration: { arah: review.status === "approve" ? "Informasi sudah cukup jelas" : review.status === "reject" ? "Tidak disetujui" : "Perlu informasi tambahan", catatan: review.comment || "Tidak ada catatan tambahan." },
+    }));
 
     return (
         // MASTER WRAPPER
@@ -153,8 +102,8 @@ export function HistoryReviewPage() {
                                 <UserCircle2 size={15} />
                             </div>
                             <div>
-                                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">Pak Slamet</p>
-                                <p className="text-[10px] text-[#666a60]">Ketua Poktan</p>
+                                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">{data?.reviewer_name || "Reviewer"}</p>
+                                <p className="text-[10px] text-[#666a60]">Reviewer</p>
                             </div>
                         </div>
                         <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
@@ -171,12 +120,12 @@ export function HistoryReviewPage() {
                             <Menu size={20} />
                         </button>
                         <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">
-                            Wilayah: Subak Jatiluwih
+                            Wilayah: {data?.region || "Belum ada wilayah"}
                         </span>
                     </div>
                     <div className="flex items-center gap-3 sm:gap-5">
                         <span className="hidden items-center gap-1.5 text-xs font-medium text-[#44483f] sm:flex">
-                            <CloudSun size={16} /> Cerah Berawan 28°C
+                            <CloudSun size={16} /> {data?.weather ? `${data.weather.condition} ${data.weather.temp}°C` : "Cuaca belum tersedia"}
                         </span>
                         <Bell size={18} className="cursor-pointer text-[#44483f] transition hover:text-[#15240a]" />
                         <div className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#0d1b03] text-white">
@@ -210,13 +159,13 @@ export function HistoryReviewPage() {
                                 onClick={() => setActiveFilter("semua")}
                                 className={`rounded-full px-5 py-2 text-[10px] sm:text-xs font-bold transition-all ${activeFilter === "semua" ? "bg-[#15240a] text-white shadow-md" : "bg-white border border-[#deded4] text-[#44483f] hover:bg-[#fafaf6]"}`}
                             >
-                                Semua (6)
+                                Semua ({historyData.length})
                             </button>
                             <button
                                 onClick={() => setActiveFilter("selesai")}
                                 className={`rounded-full px-5 py-2 text-[10px] sm:text-xs font-bold transition-all ${activeFilter === "selesai" ? "bg-[#15240a] text-white shadow-md" : "bg-white border border-[#deded4] text-[#44483f] hover:bg-[#fafaf6]"}`}
                             >
-                                Selesai (6)
+                                Selesai ({historyData.length})
                             </button>
                             <button
                                 onClick={() => setActiveFilter("terbaru")}
@@ -228,6 +177,8 @@ export function HistoryReviewPage() {
 
                         {/* History Cards List */}
                         <div className="space-y-4 sm:space-y-5">
+                            {error && <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 text-sm text-[#9f1239]">{error}</div>}
+                            {!error && historyData.length === 0 && <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 text-sm text-[#666a60]">Belum ada riwayat review.</div>}
                             {historyData.map((item, index) => {
                                 const isExpanded = expandedId === item.id;
 

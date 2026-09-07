@@ -43,7 +43,13 @@ export type ReasoningAssessment = {
     recommendedOptionId: null;
   };
   evaluatedAt: string;
-  rulesetVersion: 'water-v0.2';
+  rulesetVersion: string;
+  generation?: {
+    mode: 'llm_enhanced' | 'deterministic_fallback';
+    provider?: 'google-gemini';
+    model?: string;
+    fallbackReason?: string;
+  };
   explanation: {
     summaryCode: AssessmentContextState;
     factorItems: Array<{ code: string; evidenceId: string }>;

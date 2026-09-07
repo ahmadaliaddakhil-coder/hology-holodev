@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "spike:location": "tsx src/infrastructure/location/location-resolution-spike.ts",
-    "test": "tsx --test tests/unit/bmkg-adapter.test.ts tests/unit/reasoning.test.ts",
+    "test": "tsx --test tests/unit/bmkg-adapter.test.ts tests/unit/reasoning.test.ts tests/unit/llm-reasoning-enhancer.test.ts",
     "typecheck:demo": "tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --esModuleInterop --skipLibCheck --types node scripts/demo-seed.ts scripts/demo-reset.ts",
     "demo:seed": "tsx scripts/demo-seed.ts",
     "demo:reset": "tsx scripts/demo-reset.ts"

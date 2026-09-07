@@ -6,6 +6,7 @@ import { BigBoundaryClient } from '../infrastructure/location/big-boundary-clien
 import { BmkgAdm4Verifier } from '../infrastructure/location/bmkg-adm4-verifier.js';
 
 import { WaterReasoningEngine } from '../infrastructure/reasoning/water-reasoning-engine.js';
+import { LlmReasoningEnhancer } from '../infrastructure/reasoning/llm-reasoning-enhancer.js';
 import { formatDecisionBrief } from '../infrastructure/sharing/decision-brief-formatter.js';
 import type { BmkgCanonicalEvidence } from '../infrastructure/bmkg/bmkg.types.js';
 import type { FieldPulseEvidence } from '../infrastructure/reasoning/reasoning.types.js';
@@ -28,6 +29,7 @@ import type {
   GrowthStage,
   TrustedReviewStatus,
 } from '../domain/types.js';
+import { config } from '../config.js';
 
 const decisionCaseStatuses = new Set<DecisionCaseStatus>([
   'draft',
@@ -95,6 +97,7 @@ function sendError(response: Response, error: unknown): void {
 type ApiDependencies = {
   bmkgAdapter?: BmkgAdapter;
   reasoningEngine?: WaterReasoningEngine;
+  llmEnhancer?: LlmReasoningEnhancer;
   boundaryClient?: BigBoundaryClient;
   adm4Verifier?: BmkgAdm4Verifier;
 };
@@ -106,6 +109,7 @@ export function createApiRouter(
   const router = Router();
   const bmkgAdapter = dependencies.bmkgAdapter ?? new BmkgAdapter();
   const reasoningEngine = dependencies.reasoningEngine ?? new WaterReasoningEngine();
+  const llmEnhancer = dependencies.llmEnhancer ?? new LlmReasoningEnhancer();
   const boundaryClient = dependencies.boundaryClient ?? new BigBoundaryClient();
   const adm4Verifier = dependencies.adm4Verifier ?? new BmkgAdm4Verifier();
 
@@ -121,6 +125,10 @@ export function createApiRouter(
     if (!decisionCase) throw new Error('Decision case not found');
     await ensureLandAccess(request, decisionCase.land_id);
   };
+
+  router.get('/reasoning/status', (_request, response) => {
+    response.json({ mode: config.llmEnabled ? 'llm_enhanced' : 'deterministic_fallback', provider: config.llmEnabled ? 'google-gemini' : null, model: config.llmEnabled ? config.llmModel : null });
+  });
 
   router.get('/profile', (request, response) => {
     const profile = request.auth!.profile;
@@ -547,17 +555,21 @@ export function createApiRouter(
             delivery: bmkgEvidence.freshness_status === 'stale' ? 'cached' as const : 'live' as const,
           }
         : undefined;
-      const result = reasoningEngine.evaluate({
+      const reasoningInput = {
         decisionCaseId,
         evaluatedAt: new Date().toISOString(),
         bmkg,
         fieldPulse,
-      });
+      };
+      const baseline = reasoningEngine.evaluate(reasoningInput);
+      const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
+      const crop = decisionCase ? await repositories.cropContexts.getById(decisionCase.crop_context_id) : null;
+      const result = await llmEnhancer.enhance(reasoningInput, baseline, crop);
       const createdAssessment = await repositories.assessments.createAssessment({
         decision_case_id: decisionCaseId,
         version: await repositories.assessments.getNextVersion(decisionCaseId),
         status: 'active',
-        summary: result.contextState,
+        summary: result.generatedSummary ?? result.contextState,
         basis_strength: result.confidence,
         factors: result.factors,
         missing_evidence: result.missingEvidence,

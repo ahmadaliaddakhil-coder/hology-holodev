@@ -15,6 +15,6 @@ export async function ensureAssessment(landId:string):Promise<WorkflowData>{
   if(!evidence.some(x=>x.type==="bmkg_forecast")&&land.adm4_code) await farmerApi.refreshBmkg(decisionCase.id);
   if(!evidence.some(x=>x.type==="field_pulse")){const profile=await farmerApi.getProfile();await farmerApi.createFieldPulse(decisionCase.id,{water_presence:String(fieldPulse.water_presence||"unknown"),irrigation_flow:String(fieldPulse.irrigation_flow||"unknown"),reported_by:profile.display_name,observed_at:new Date().toISOString(),is_mock:false});}
   evidence=await farmerApi.listEvidence(decisionCase.id); let result:ApiAssessmentResult;
-  try{result=await farmerApi.getAssessment(decisionCase.id)}catch{result=await farmerApi.assess(decisionCase.id)}
+  try{result=await farmerApi.getAssessment(decisionCase.id);const status=await farmerApi.getReasoningStatus();if(status.mode==="llm_enhanced"&&!result.assessment.rule_version?.includes(status.model||"+llm"))result=await farmerApi.assess(decisionCase.id)}catch{result=await farmerApi.assess(decisionCase.id)}
   saveWorkflow(landId,{case_id:decisionCase.id,assessment_id:result.assessment.id}); sessionStorage.removeItem(`field-pulse:${landId}`); return {land,crop,decisionCase,evidence,result};
 }

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   ArrowRight, Bell, CloudSun, Leaf, Menu, 
-  Settings, Sprout, UserCircle2, Warehouse, History, 
+  Settings, UserCircle2, Warehouse, History,
   ClipboardCheck, AlertTriangle, CloudRain, Check, X
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {

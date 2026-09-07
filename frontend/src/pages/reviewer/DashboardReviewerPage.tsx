@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import {
   ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu, 
-  Settings, Sprout, UserCircle2, Warehouse, History, 
+  Settings, UserCircle2, Warehouse, History,
   CheckCircle2, ClipboardCheck, ChevronDown, AlertTriangle,
-  Droplets, Clock, CloudRain, Check, X
+  Clock, CloudRain, Check, X
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 // Komponen Navigasi Sidebar
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -24,7 +24,6 @@ function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse
 export function DashboardReviewerPage() {  
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const nav = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);

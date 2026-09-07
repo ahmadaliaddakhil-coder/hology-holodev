@@ -104,6 +104,7 @@ export type ApiProfile = {
 };
 
 export const farmerApi = {
+  getReasoningStatus: () => apiFetch<{ mode: "llm_enhanced" | "deterministic_fallback"; provider: string | null; model: string | null }>("/reasoning/status"),
   getProfile: () => apiFetch<ApiProfile>("/profile"),
   listLands: () => apiFetch<ApiLand[]>("/lands"),
   getLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`),

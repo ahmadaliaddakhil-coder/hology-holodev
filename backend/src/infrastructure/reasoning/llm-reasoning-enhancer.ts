@@ -6,10 +6,10 @@ type LlmOutput = { summary: string; options: Array<{ title: string; description:
 export type EnhancedAssessment = ReasoningAssessment & { generatedSummary?: string };
 
 const schema = {
-  type: 'object', required: ['summary', 'options'], additionalProperties: false,
+  type: 'object', required: ['summary', 'options'],
   properties: {
     summary: { type: 'string', description: 'Ringkasan kondisi dalam Bahasa Indonesia sederhana, maksimal 3 kalimat.' },
-    options: { type: 'array', minItems: 2, maxItems: 4, items: { type: 'object', required: ['title','description','rationale'], additionalProperties: false, properties: { title: { type: 'string' }, description: { type: 'string' }, rationale: { type: 'string' } } } },
+    options: { type: 'array', minItems: 2, maxItems: 4, items: { type: 'object', required: ['title','description','rationale'], properties: { title: { type: 'string' }, description: { type: 'string' }, rationale: { type: 'string' } } } },
   },
 };
 
@@ -35,7 +35,7 @@ export class LlmReasoningEnhancer {
       const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12_000);
       const safeInput={crop:crop?{crop_name:crop.crop_name,variety_name:crop.variety_name,growth_stage:crop.growth_stage,planting_date:crop.planting_date}:null,bmkg:input.bmkg?{source:'BMKG',delivery:input.bmkg.delivery,analysis_time:input.bmkg.evidence.temporal.analysis_time,forecast_slots:input.bmkg.evidence.payload.forecast_slots.slice(0,8)}:null,field_pulse:input.fieldPulse?{water_presence:input.fieldPulse.waterPresence,irrigation_flow:input.fieldPulse.irrigationFlow,observed_at:input.fieldPulse.observedAt}:null,guardrail:{context_state:baseline.contextState,confidence:baseline.confidence,missing_evidence:baseline.missingEvidence,limitations:baseline.limitations}};
       const prompt=`Anda adalah lapisan decision-support RembukTani, bukan pengambil keputusan dan bukan agronom otonom. Analisis HANYA JSON evidence berikut. Buat ringkasan transparan dan 2-4 alternatif TANPA ranking. Jangan menciptakan data, prediksi hasil, dosis, volume, durasi, jadwal presisi, diagnosis hama, atau klaim kepastian. Jika evidence kurang, opsi harus berfokus pada verifikasi, pengumpulan informasi, review manusia, atau menunda perubahan. Sebutkan keterbatasan secara jujur. Keputusan akhir milik petani.\nDATA=${JSON.stringify(safeInput)}`;
-      const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':this.apiKey},signal:controller.signal,body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:1200,responseMimeType:'application/json',responseSchema:schema}})}).finally(()=>clearTimeout(timeout));
+      const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':this.apiKey},signal:controller.signal,body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:3000,responseMimeType:'application/json',responseSchema:schema}})}).finally(()=>clearTimeout(timeout));
       if(!response.ok)throw new Error(`Gemini HTTP ${response.status}`);const body=await response.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>};const text=body.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error('Gemini returned no structured text');const generated=validate(JSON.parse(text));
       return {...baseline,generatedSummary:generated.summary,actionOptions:generated.options.map((option,index)=>({optionId:`LLM-${index+1}`, ...option})),rulesetVersion:`${baseline.rulesetVersion}+${this.model}`,generation:{mode:'llm_enhanced',provider:'google-gemini',model:this.model}};
     }catch(error){this.retryAfter=Date.now()+60_000;return {...baseline,generation:{mode:'deterministic_fallback',provider:'google-gemini',model:this.model,fallbackReason:error instanceof Error?error.message:'LLM gagal'}};}

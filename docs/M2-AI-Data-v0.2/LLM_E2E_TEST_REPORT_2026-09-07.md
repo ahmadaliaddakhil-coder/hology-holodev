@@ -6,7 +6,7 @@
 - Farmer account: authenticated test session
 - Test land: `Lahan QA Tunggulwulung 2026-09-07`
 - ADM4: `35.73.05.1001`
-- Model configuration: enabled, `gemini-2.5-flash`
+- Model configuration awal: enabled, `gemini-2.5-flash`. Live compatibility test memvalidasi key, menemukan model lama ditutup untuk pengguna baru, lalu memilih `gemini-3.5-flash` setelah model tersebut lulus structured-output request; `gemini-3.6-flash` dan alias latest saat pengujian mengembalikan `503 UNAVAILABLE`.
 
 No Supabase schema, RLS, policy, auth setting, or storage configuration was changed.
 
@@ -19,7 +19,7 @@ No Supabase schema, RLS, policy, auth setting, or storage configuration was chan
 | Field Pulse update | PASS | New `limited` water + `not_flowing` irrigation observation persisted. |
 | Latest-evidence selection | PASS after fix | Assessment used the newest Field Pulse instead of an older `unknown` record. |
 | Deterministic assessment | PASS | `context_available`, medium basis, BMKG + two local factors. |
-| Live Gemini call | BLOCKED BY CONFIG | Google returned `API_KEY_INVALID`; no generated output was accepted. |
+| Live Gemini call | PASS after compatibility fixes | Real backend enhancer returned `llm_enhanced`, ruleset `water-v0.2+gemini-3.5-flash`, a transparent summary, and three non-ranked options. |
 | Safe fallback | PASS | Deterministic options remained available; no fabricated AI narrative appeared. |
 | Alternative selection | PASS | Selected option propagated to optional review and final decision. |
 | Optional review | PASS | Core flow continued with no reviewer response. |
@@ -30,9 +30,9 @@ No Supabase schema, RLS, policy, auth setting, or storage configuration was chan
 
 QA decision record: `c390b3b4-59cb-4fa6-9c13-8320b2f8aa18`.
 
-## LLM blocker resolution
+## LLM blocker resolution and retest
 
-Replace `GEMINI_API_KEY` with a Gemini Developer API key created in Google AI Studio, then restart the backend. Do not commit or paste the key. A backend restart changes the reasoning instance identifier, allowing existing deterministic assessments to be enhanced once with the corrected key.
+The replacement Gemini Developer API key was validated without printing or committing it. Google returned HTTP 200 for key/model discovery. Two compatibility issues were then corrected: unsupported `additionalProperties` keywords were removed from Gemini's `responseSchema` while application-side validation remained strict, and the retired `gemini-2.5-flash` default was replaced with the tested `gemini-3.5-flash`. The final live call passed.
 
 ## Resilience added during test
 
@@ -41,3 +41,4 @@ Replace `GEMINI_API_KEY` with a Gemini Developer API key created in Google AI St
 - Field notes and observed water trend are preserved in evidence payload.
 - Failed LLM requests open a one-minute circuit breaker.
 - The frontend attempts one enhancement per backend instance, preventing repeated slow calls across pages.
+- The enhancement-attempt cache is namespaced by model, so a model migration can upgrade an existing deterministic assessment once without retry loops.

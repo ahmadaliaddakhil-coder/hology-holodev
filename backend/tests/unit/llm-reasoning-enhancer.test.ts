@@ -12,7 +12,7 @@ const input: ReasoningInput = {
 
 test('uses deterministic fallback when LLM is disabled', async () => {
   const baseline = new WaterReasoningEngine().evaluate(input);
-  const result = await new LlmReasoningEnhancer(undefined, 'gemini-2.5-flash', false).enhance(input, baseline, null);
+  const result = await new LlmReasoningEnhancer(undefined, 'gemini-3.5-flash', false).enhance(input, baseline, null);
   assert.equal(result.generation?.mode, 'deterministic_fallback');
   assert.deepEqual(result.actionOptions, baseline.actionOptions);
 });
@@ -22,7 +22,7 @@ test('rejects unsafe generated quantities and preserves baseline options', async
   globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ summary: 'Kondisi perlu ditinjau.', options: [{ title: 'Pompa', description: 'Pompa selama 2 jam.', rationale: 'Air terbatas.' }, { title: 'Cek', description: 'Periksa petak.', rationale: 'Data lapangan.' }] }) }] } }] }), { status: 200 });
   try {
     const baseline = new WaterReasoningEngine().evaluate(input);
-    const result = await new LlmReasoningEnhancer('test-key', 'gemini-2.5-flash', true).enhance(input, baseline, null);
+    const result = await new LlmReasoningEnhancer('test-key', 'gemini-3.5-flash', true).enhance(input, baseline, null);
     assert.equal(result.generation?.mode, 'deterministic_fallback');
     assert.deepEqual(result.actionOptions, baseline.actionOptions);
   } finally { globalThis.fetch = originalFetch; }

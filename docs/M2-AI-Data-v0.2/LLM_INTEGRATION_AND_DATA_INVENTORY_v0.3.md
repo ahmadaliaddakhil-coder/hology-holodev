@@ -32,7 +32,7 @@ LLM tidak mengganti evidence normalizer, freshness policy, atau keputusan manusi
 
 ## Model
 
-Default implementasi adalah `gemini-2.5-flash`: stabil, cepat, structured JSON, dan cocok untuk demo interaktif. Model dapat diganti melalui `LLM_MODEL` tanpa mengubah route atau UI. API key hanya berada di backend dan tidak dikirim ke browser.
+Default implementasi adalah `gemini-3.5-flash`: model Flash stabil yang tersedia untuk key proyek, cepat, mendukung structured JSON, dan cocok untuk demo interaktif. Model dapat diganti melalui `LLM_MODEL` tanpa mengubah route atau UI. API key hanya berada di backend dan tidak dikirim ke browser.
 
 ## Guardrail output
 

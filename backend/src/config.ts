@@ -23,6 +23,6 @@ export const config = {
   email: process.env.email,
   password: process.env.password,
   llmApiKey: process.env.GEMINI_API_KEY,
-  llmModel: process.env.LLM_MODEL?.trim() || 'gemini-2.5-flash',
+  llmModel: process.env.LLM_MODEL?.trim() || 'gemini-3.5-flash',
   llmEnabled: process.env.LLM_ENABLED !== 'false' && Boolean(process.env.GEMINI_API_KEY),
 };

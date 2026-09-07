@@ -23,6 +23,11 @@ import { ActionAlternativesPage } from "../pages/farmer/ActionAlternativesPage";
 import { OptionalReviewPage } from "../pages/farmer/OptionalReviewPage";
 import { SelectReviewerPage } from "../pages/farmer/SelectReviewerPage";
 import { FinalDecisionPage } from "../pages/farmer/FinalDecisionPage";
+import { DashboardReviewerPage } from "../pages/reviewer/DashboardReviewerPage";
+import { ReviewListPage } from "../pages/reviewer/ReviewListPage";
+import { ReviewDetailPage } from "../pages/reviewer/ReviewDetailPage";
+import { HistoryReviewPage } from "../pages/reviewer/HistoryReviewPage";
+import { ReviewerProfilePage } from "../pages/reviewer/ReviewerProfilePage";
 
 function App() {
   return (
@@ -50,6 +55,12 @@ function App() {
         
         <Route path="/farmer/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
         <Route path="/farmer/history/:historyId" element={<ProtectedRoute><HistoryDetailPage /></ProtectedRoute>} />
+
+        <Route path="/reviewer/dashboard" element={<ProtectedRoute><DashboardReviewerPage /></ProtectedRoute>} />
+        <Route path="/reviewer/review" element={<ProtectedRoute><ReviewListPage /></ProtectedRoute>} />
+        <Route path="/reviewer/review/:reviewId" element={<ProtectedRoute><ReviewDetailPage /></ProtectedRoute>} />
+        <Route path="/reviewer/history" element={<ProtectedRoute><HistoryReviewPage /></ProtectedRoute>} />
+        <Route path="/reviewer/profile" element={<ProtectedRoute><ReviewerProfilePage /></ProtectedRoute>} />
         
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

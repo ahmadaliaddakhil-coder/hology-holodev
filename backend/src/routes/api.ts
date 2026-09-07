@@ -7,6 +7,7 @@ import { BmkgAdm4Verifier } from '../infrastructure/location/bmkg-adm4-verifier.
 
 import { WaterReasoningEngine } from '../infrastructure/reasoning/water-reasoning-engine.js';
 import { LlmReasoningEnhancer } from '../infrastructure/reasoning/llm-reasoning-enhancer.js';
+import { ACTION_CATALOG } from '../infrastructure/reasoning/action-catalog.js';
 import { formatDecisionBrief } from '../infrastructure/sharing/decision-brief-formatter.js';
 import type { BmkgCanonicalEvidence } from '../infrastructure/bmkg/bmkg.types.js';
 import type { FieldPulseEvidence } from '../infrastructure/reasoning/reasoning.types.js';
@@ -114,6 +115,10 @@ export function createApiRouter(
   const llmEnhancer = dependencies.llmEnhancer ?? new LlmReasoningEnhancer();
   const boundaryClient = dependencies.boundaryClient ?? new BigBoundaryClient();
   const adm4Verifier = dependencies.adm4Verifier ?? new BmkgAdm4Verifier();
+  const withCatalogIds = <T extends { title: string }>(options: T[]) => options.map((option) => ({
+    ...option,
+    catalog_option_id: ACTION_CATALOG.find((catalogItem) => catalogItem.title === option.title)?.optionId ?? null,
+  }));
 
 
   const ensureLandAccess = async (request: Request, landId: string): Promise<void> => {
@@ -559,21 +564,28 @@ export function createApiRouter(
             delivery: bmkgEvidence.freshness_status === 'stale' ? 'cached' as const : 'live' as const,
           }
         : undefined;
+      const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
+      const crop = decisionCase ? await repositories.cropContexts.getById(decisionCase.crop_context_id) : null;
       const reasoningInput = {
         decisionCaseId,
         evaluatedAt: new Date().toISOString(),
         bmkg,
         fieldPulse,
+        cropContext: crop ? {
+          cropContextId: crop.id,
+          cropName: crop.crop_name,
+          varietyName: crop.variety_name,
+          growthStage: crop.growth_stage,
+          plantingDate: crop.planting_date,
+        } : undefined,
       };
       const baseline = reasoningEngine.evaluate(reasoningInput);
-      const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
-      const crop = decisionCase ? await repositories.cropContexts.getById(decisionCase.crop_context_id) : null;
       const result = await llmEnhancer.enhance(reasoningInput, baseline, crop);
       const createdAssessment = await repositories.assessments.createAssessment({
         decision_case_id: decisionCaseId,
         version: await repositories.assessments.getNextVersion(decisionCaseId),
         status: 'active',
-        summary: result.generatedSummary ?? result.contextState,
+        summary: result.generatedSummary ?? result.summary,
         basis_strength: result.confidence,
         factors: result.factors,
         missing_evidence: result.missingEvidence,
@@ -592,7 +604,7 @@ export function createApiRouter(
         })),
       );
       await repositories.decisionCases.updateStatus(decisionCaseId, 'assessed');
-      response.status(201).json({ assessment, options, reasoning: result });
+      response.status(201).json({ assessment, options: withCatalogIds(options), reasoning: result });
     } catch (error) {
       sendError(response, error);
     }
@@ -608,7 +620,7 @@ export function createApiRouter(
         return;
       }
       const options = await repositories.actionOptions.getByAssessmentId(assessment.id);
-      response.json({ assessment, options });
+      response.json({ assessment, options: withCatalogIds(options) });
     } catch (error) {
       sendError(response, error);
     }
@@ -637,7 +649,7 @@ export function createApiRouter(
 
   router.get('/assessments/:assessmentId/options', async (request, response) => {
     try {
-      response.json(await repositories.actionOptions.getByAssessmentId(requiredString(request.params.assessmentId, 'assessmentId')));
+      response.json(withCatalogIds(await repositories.actionOptions.getByAssessmentId(requiredString(request.params.assessmentId, 'assessmentId'))));
     } catch (error) {
       sendError(response, error);
     }

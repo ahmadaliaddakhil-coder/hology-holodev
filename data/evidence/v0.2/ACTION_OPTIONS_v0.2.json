@@ -8,7 +8,8 @@
       "description": "Ulangi pengamatan lokal yang relevan untuk kasus aktif.",
       "rationale": "Mengurangi informasi lokal yang belum diketahui atau perlu konfirmasi.",
       "label": "Periksa kembali kondisi lahan",
-      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+      "allowed_states": ["context_available", "needs_verification"],
+      "trigger_factors": ["water_limited_or_irrigation_not_flowing", "important_information_missing"]
     },
     {
       "option_id": "OPT-COLLECT-WATER-SOURCE",
@@ -17,7 +18,8 @@
       "description": "Catat kondisi atau alokasi sumber air tanpa menetapkan volume atau durasi.",
       "rationale": "Melengkapi konteks air yang belum tersedia.",
       "label": "Konfirmasi kondisi atau alokasi sumber air",
-      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+      "allowed_states": ["context_available", "needs_verification"],
+      "trigger_factors": ["water_limited_or_irrigation_not_flowing", "important_information_missing"]
     },
     {
       "option_id": "OPT-REQUEST-REVIEW",
@@ -26,7 +28,8 @@
       "description": "Bagikan evidence kepada reviewer atau penyuluh untuk telaah manusia.",
       "rationale": "Menambah konteks ketika evidence terbatas atau berkonflik.",
       "label": "Minta pertimbangan pihak tepercaya",
-      "allowed_states": ["context_available", "needs_verification"]
+      "allowed_states": ["context_available", "needs_verification"],
+      "trigger_factors": ["human_review_useful"]
     },
     {
       "option_id": "OPT-DEFER",
@@ -35,7 +38,8 @@
       "description": "Tunda perubahan tindakan sampai informasi cukup.",
       "rationale": "Menjaga abstention saat dasar keputusan belum memadai.",
       "label": "Tunda perubahan sampai informasi cukup",
-      "allowed_states": ["context_available", "needs_verification", "insufficient_evidence"]
+      "allowed_states": ["needs_verification", "insufficient_evidence"],
+      "trigger_factors": ["always"]
     }
   ],
   "ranking": null,

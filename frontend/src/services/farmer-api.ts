@@ -85,7 +85,7 @@ export type ApiAssessment = {
   rule_version?: string;
 };
 
-export type ApiActionOption = { id: string; title: string; description?: string; rationale?: string; display_order: number };
+export type ApiActionOption = { id: string; catalog_option_id?: string | null; title: string; description?: string; rationale?: string; display_order: number };
 export type ApiAssessmentResult = { assessment: ApiAssessment; options: ApiActionOption[]; reasoning?: Record<string, unknown> };
 export type ApiTrustedReview = { id?: string; decision_case_id?: string; status: "pending" | "approve" | "reject"; comment?: string; created_at?: string };
 

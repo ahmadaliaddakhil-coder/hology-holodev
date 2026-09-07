@@ -19,11 +19,26 @@ test('uses deterministic fallback when LLM is disabled', async () => {
 
 test('rejects unsafe generated quantities and preserves baseline options', async () => {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ summary: 'Kondisi perlu ditinjau.', options: [{ title: 'Pompa', description: 'Pompa selama 2 jam.', rationale: 'Air terbatas.' }, { title: 'Cek', description: 'Periksa petak.', rationale: 'Data lapangan.' }] }) }] } }] }), { status: 200 });
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ summary: 'Kondisi perlu ditinjau.', explanations: baseline.actionOptions.map((option) => ({ option_id: option.optionId, description: 'Pompa selama 2 jam.', rationale: 'Air terbatas.' })) }) }] } }] }), { status: 200 });
+  const baseline = new WaterReasoningEngine().evaluate(input);
   try {
-    const baseline = new WaterReasoningEngine().evaluate(input);
     const result = await new LlmReasoningEnhancer('test-key', 'gemini-3.5-flash', true).enhance(input, baseline, null);
     assert.equal(result.generation?.mode, 'deterministic_fallback');
     assert.deepEqual(result.actionOptions, baseline.actionOptions);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('LLM may explain but cannot replace rule-selected action IDs or titles', async () => {
+  const originalFetch = globalThis.fetch;
+  const baseline = new WaterReasoningEngine().evaluate(input);
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({
+    summary: 'Bukti utama belum lengkap sehingga keputusan perlu ditunda.',
+    explanations: baseline.actionOptions.map((option) => ({ option_id: option.optionId, description: 'Tunggu sampai informasi utama tersedia.', rationale: 'Dasar penilaian masih terbatas.' })),
+  }) }] } }] }), { status: 200 });
+  try {
+    const result = await new LlmReasoningEnhancer('test-key', 'gemini-3.5-flash', true).enhance(input, baseline, null);
+    assert.equal(result.generation?.mode, 'llm_enhanced');
+    assert.deepEqual(result.actionOptions.map((option) => option.optionId), baseline.actionOptions.map((option) => option.optionId));
+    assert.deepEqual(result.actionOptions.map((option) => option.title), baseline.actionOptions.map((option) => option.title));
   } finally { globalThis.fetch = originalFetch; }
 });

@@ -17,13 +17,15 @@ Data yang **tidak** dimiliki dan tidak boleh diklaim: sensor tanah, NDVI/Sentine
 ```text
 BMKG canonical + Crop Context + Field Pulse
                   ↓
-       deterministic water-v0.2 guardrail
+ deterministic assessment + rule mapping
                   ↓
- Gemini structured generation (opsional)
+      fixed action catalog alternatives
                   ↓
- backend safety/business validation
+ Gemini explanation-only layer (opsional)
                   ↓
- assessment + 2–4 unranked action options
+ backend exact-ID + safety validation
+                  ↓
+ assessment + unranked action options
                   ↓
  review opsional → keputusan akhir manusia
 ```
@@ -37,8 +39,9 @@ Default implementasi adalah `gemini-3.5-flash`: model Flash stabil yang tersedia
 ## Guardrail output
 
 - Bahasa Indonesia sederhana.
-- Dua sampai empat alternatif, tanpa ranking.
+- Action ID dan title selalu berasal dari fixed catalog, tanpa ranking.
+- LLM hanya boleh memperjelas description dan rationale; summary assessment dibuat engine deterministik.
 - Tidak boleh membuat data baru.
 - Tidak boleh memberi dosis, volume, durasi, jadwal presisi, diagnosis, atau jaminan hasil.
-- Saat evidence kurang, opsi hanya verifikasi, kumpulkan data, minta review, atau tunda.
+- Saat evidence tidak cukup, rule engine hanya memberikan opsi tunda.
 - Setiap output disimpan bersama `rule_version` model dan evidence yang mendasarinya.

@@ -7,6 +7,7 @@ export type FieldPulseEvidence = {
   observedAt?: string;
   waterPresence?: Extract<FieldPulseValue, 'present' | 'limited' | 'none' | 'unknown'>;
   irrigationFlow?: Extract<FieldPulseValue, 'flowing' | 'limited' | 'not_flowing' | 'unknown'>;
+  waterTrend?: 'kering' | 'tetap' | 'basah' | 'gatau';
 };
 
 export type ReasoningInput = {

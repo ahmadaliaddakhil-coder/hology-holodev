@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CircleMarker, MapContainer, Polygon, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
-import { ArrowLeft, Check, Crosshair, Layers3, Map as MapIcon, MapPin, Navigation, Waves } from "lucide-react";
+import { ArrowLeft, Bell, Check, Crosshair, Layers3, Leaf, Map as MapIcon, MapPin, Menu, Navigation, UserCircle2, X } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { readLandDraft, updateLandDraft } from "../../lib/land-draft";
 import { farmerApi } from "../../services/farmer-api";
+import { getUser } from "../../lib/auth";
+import { WeatherStatus } from "../../components/farmer/WeatherStatus";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 type Point = [number, number];
 const DEFAULT_POSITION: Point = [-7.926976124, 112.6130137732];
@@ -34,6 +37,8 @@ const areaOf = (points: Point[]) => {
 export function LocationMapPage() {
   const draft = readLandDraft();
   const navigate = useNavigate();
+  const user = getUser();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [position, setPosition] = useState<Point>([coordinate(draft.latitude, DEFAULT_POSITION[0]), coordinate(draft.longitude, DEFAULT_POSITION[1])]);
   const [polygon, setPolygon] = useState<Point[]>(draft.boundaryPolygon ?? []);
   const [boundary, setBoundary] = useState<Boundary | null>(draft.locationResolved ? { village: draft.village, district: draft.district, regency: draft.regency, province: draft.province, adm4Candidate: draft.adm4Code } : null);
@@ -86,19 +91,20 @@ export function LocationMapPage() {
   };
 
   return <div className="min-h-screen bg-[#f3f3ec] text-[#15240a]">
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[208px] flex-col justify-between bg-[#fafaf6] px-5 py-4 shadow-sm lg:flex">
+    {mobileNavOpen && <button className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu" />}
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col justify-between bg-[#fafaf6] p-5 shadow-sm transition-transform duration-300 ${mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
       <div>
-        <div className="mb-5 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white"><span className="text-[#85c254]">●</span> REMBUKTANI</div>
-        <Link to="/farmer/lands/new" className="mb-5 flex items-center justify-center gap-2 rounded-xl bg-[#85c254] px-3 py-3 text-sm font-bold">+ Tambah Lahan</Link>
-        <nav className="space-y-1"><SideLink to="/farmer/dashboard" icon={<MapIcon size={17}/>} label="Beranda"/><SideLink to="/farmer/lands" icon={<Layers3 size={17}/>} label="Lahan" active/><SideLink to="/farmer/history" icon={<Navigation size={17}/>} label="Riwayat"/><SideLink to="/farmer/profile" icon={<MapPin size={17}/>} label="Profil"/></nav>
+        <div className="mb-6 flex items-center justify-between px-2"><div className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white"><Leaf size={15} className="text-[#85c254]" /> REMBUKTANI</div><button className="md:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu"><X size={20}/></button></div>
+        <Link to="/farmer/lands/new" className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#85c254] px-4 py-3 text-sm font-semibold">+ Tambah Lahan</Link>
+        <nav className="space-y-1"><SideLink to="/farmer/dashboard" icon={<MapIcon size={18}/>} label="Beranda"/><SideLink to="/farmer/lands" icon={<Layers3 size={18}/>} label="Lahan" active/><SideLink to="/farmer/history" icon={<Navigation size={18}/>} label="Riwayat"/><SideLink to="/farmer/profile" icon={<UserCircle2 size={18}/>} label="Profil"/></nav>
       </div>
-      <div className="rounded-xl bg-[#e9fcb5] p-3 text-xs"><p className="font-bold">Sinkronisasi BMKG</p><p className="mt-1 text-[#44483f]">Lokasi diproses otomatis</p></div>
+      <div className="space-y-4 px-1"><div className="rounded-xl bg-[#e9fcb5] p-3"><p className="mb-2 text-xs font-bold">Cuaca lahan terdekat</p><WeatherStatus /></div><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15}/></div><div><p className="max-w-36 truncate text-xs font-bold">{user?.display_name || user?.displayName || "Sahabat Tani"}</p><p className="text-xs text-[#44483f]">{user?.role === "reviewer" ? "Reviewer" : "Petani"}</p></div></div><LogoutButton compact /></div></div>
     </aside>
 
-    <div className="lg:pl-[208px]">
-      <header className="flex h-16 items-center justify-between border-b border-[#deded4]/70 bg-[#fafaf6] px-4 sm:px-8"><Link to="/farmer/lands" className="flex items-center gap-2 text-sm font-semibold"><ArrowLeft size={16}/>Kembali ke Info Lahan</Link><span className="hidden items-center gap-2 text-xs font-semibold sm:flex"><Waves size={17}/>Cuaca mengikuti lokasi lahan</span></header>
+    <div className="md:pl-[260px]">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMobileNavOpen(true)} aria-label="Buka menu"><Menu size={22}/></button><Link to="/farmer/lands" className="flex items-center gap-2 text-sm font-semibold"><ArrowLeft size={16}/>Kembali ke Info Lahan</Link><div className="flex items-center gap-3"><span className="hidden sm:flex"><WeatherStatus /></span><Bell size={17}/><UserCircle2 size={20}/></div></header>
       <main className="mx-auto max-w-[1320px] px-4 py-5 sm:px-6 lg:px-7">
-        <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#56652e]">Lokasi petak · langkah 1 dari 2</p><h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">Tentukan Titik Lokasi Petak</h1><p className="mt-2 max-w-2xl text-sm text-[#56652e]">Klik lokasi petak atau gunakan lokasi perangkat. Nama desa akan dicari otomatis dari titik tersebut.</p></div>
+        <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#56652e]">Lokasi petak · langkah 2 dari 3</p><h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl">Tentukan Titik Lokasi Petak</h1><p className="mt-2 max-w-2xl text-sm text-[#56652e]">Klik lokasi petak atau gunakan lokasi perangkat. Nama desa akan dicari otomatis dari titik tersebut.</p></div>
         <div className="grid gap-5 xl:grid-cols-[330px_1fr]">
           <section className="space-y-4 rounded-2xl bg-[#fafaf6] p-4 shadow-sm">
             <div className="rounded-xl border-t-4 border-[#85c254] bg-white p-4">

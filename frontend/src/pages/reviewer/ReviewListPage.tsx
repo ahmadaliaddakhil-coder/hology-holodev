@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   ArrowRight, Bell, CloudSun, Leaf, Menu, 
-  Settings, UserCircle2, Warehouse, History,
-  ClipboardCheck, AlertTriangle, X
+  Settings, Sprout, UserCircle2, Warehouse, History, 
+  ClipboardCheck, AlertTriangle, CloudRain, Check, X
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";
+import { Link, useNavigate } from "react-router-dom";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -25,16 +24,11 @@ export function ReviewListPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeFilter, setActiveFilter] = useState("semua");
-  const [data, setData] = useState<ApiReviewerDashboard | null>(null);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
-    reviewerApi.getDashboard().then(setData).catch((reason) => setError(reason instanceof Error ? reason.message : "Gagal memuat review"));
     return () => clearTimeout(timer);
   }, []);
-
-  const reviews = activeFilter === "selesai" ? [] : (data?.pending_reviews ?? []);
 
   return (
     // MASTER WRAPPER
@@ -83,8 +77,8 @@ export function ReviewListPage() {
                 <UserCircle2 size={15} />
               </div>
               <div>
-                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">{data?.reviewer_name || "Reviewer"}</p>
-                <p className="text-[10px] text-[#666a60]">Reviewer</p>
+                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">Pak Slamet</p>
+                <p className="text-[10px] text-[#666a60]">Ketua Poktan</p>
               </div>
             </div>
             <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
@@ -96,17 +90,18 @@ export function ReviewListPage() {
         <div className="flex-1 flex flex-col min-w-0 md:ml-[260px]">        
         
         {/* TOPBAR STANDAR */}
-<header className="fixed top-0 left-0 right-0 md:left-[260px] z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">          <div className="flex items-center gap-3">
+        <header className="fixed top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">
+          <div className="flex items-center gap-3">
             <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 xl:hidden" onClick={() => setMobileNavOpen(true)}>
               <Menu size={20} />
             </button>
             <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">
-              Wilayah: {data?.region || "Belum ada wilayah"}
+              Wilayah: Subak Jatiluwih
             </span>
           </div>
           <div className="flex items-center gap-3 sm:gap-5">
             <span className="hidden items-center gap-1.5 text-xs font-medium text-[#44483f] sm:flex">
-              <CloudSun size={16} /> {data?.weather ? `${data.weather.condition} ${data.weather.temp}°C` : "Cuaca belum tersedia"}
+              <CloudSun size={16} /> Cerah Berawan 28°C
             </span>
             <Bell size={18} className="cursor-pointer text-[#44483f] transition hover:text-[#15240a]" />
             <div className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#0d1b03] text-white">
@@ -135,46 +130,49 @@ export function ReviewListPage() {
                 onClick={() => setActiveFilter("semua")}
                 className={`rounded-full px-4 py-2 text-[10px] sm:text-xs font-bold transition-all ${activeFilter === "semua" ? "bg-[#15240a] text-white shadow-md" : "bg-white border border-[#deded4] text-[#44483f] hover:bg-[#fafaf6]"}`}
               >
-                Semua ({data?.stats.pending_count ?? 0})
+                Semua (3)
               </button>
               <button 
                 onClick={() => setActiveFilter("menunggu")}
                 className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-[10px] sm:text-xs font-bold transition-all ${activeFilter === "menunggu" ? "bg-[#15240a] text-white shadow-md" : "bg-white border border-[#deded4] text-[#44483f] hover:bg-[#fafaf6]"}`}
               >
                 <div className={`size-1.5 rounded-full ${activeFilter === "menunggu" ? "bg-white" : "bg-[#ca8a04]"}`}></div> 
-                Menunggu Pertimbangan ({data?.stats.pending_count ?? 0})
+                Menunggu Pertimbangan (3)
               </button>
               <button 
                 onClick={() => setActiveFilter("selesai")}
                 className={`rounded-full px-4 py-2 text-[10px] sm:text-xs font-bold transition-all ${activeFilter === "selesai" ? "bg-[#15240a] text-white shadow-md" : "bg-white border border-[#deded4] text-[#44483f] hover:bg-[#fafaf6]"}`}
               >
-                Sudah Diberi Masukan ({data?.completed_reviews.length ?? 0})
+                Sudah Diberi Masukan (0)
               </button>
             </div>
 
             {/* List Review Masuk */}
             <div className="space-y-4 sm:space-y-5">
-              {error && <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 text-sm text-[#9f1239]">{error}</div>}
-              {!error && reviews.length === 0 && <div className="rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 text-sm text-[#666a60]">Tidak ada review pada kategori ini.</div>}
-              {reviews.map((review, index) => (
-              <div key={review.review_id} style={{ transitionDelay: `${200 + index * 100}ms` }} className={`group rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 transition-all hover:border-[#85c254]/50 hover:shadow-md duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+              
+              {/* Card 1 */}
+              <div className={`group rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 transition-all hover:border-[#85c254]/50 hover:shadow-md delay-200 duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs mb-3">
-                      <span className="rounded bg-[#e9fcb5] px-2 py-1 font-bold text-[#213014]">{review.land_name} • {review.crop_name}</span>
-                      <span className="text-[#666a60]">Fase {review.growth_stage}</span>
+                      <span className="rounded bg-[#e9fcb5] px-2 py-1 font-bold text-[#213014]">Blok Tirto A3 • Padi Inpari 32</span>
+                      <span className="text-[#666a60]">Fase Berbunga - HST 58</span>
                     </div>
                     
-                    <p className="text-[10px] sm:text-xs text-[#a4a99d] mb-1.5">Pemilik: <span className="font-semibold text-[#666a60]">{review.farmer_name} ({review.location})</span></p>
+                    <p className="text-[10px] sm:text-xs text-[#a4a99d] mb-1.5">Pemilik: <span className="font-semibold text-[#666a60]">Pak Budi (Kepanjen, Malang)</span></p>
                     <h3 className="text-sm sm:text-base font-bold text-[#15240a] mb-4 leading-snug">
-                      {review.decision_type}
+                      Kondisi perlu ditinjau — Indikasi defisit air & pintu irigasi tersumbat di hilir
                     </h3>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      {review.evidence.bmkg && <span className="flex items-center gap-1.5 rounded-lg bg-[#fafaf6] border border-[#deded4]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#44483f]"><CloudSun size={12} className="text-[#666a60]" /> BMKG: {review.evidence.bmkg.condition} {review.evidence.bmkg.temp}°C</span>}
-                      {review.evidence.field_pulse && <span className="flex items-center gap-1.5 rounded-lg bg-[#fff1f2] border border-[#fecdd3]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#9f1239]"><AlertTriangle size={12} className="text-[#e11d48]" /> Field Pulse: "{review.evidence.field_pulse.text}"</span>}
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#fafaf6] border border-[#deded4]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#44483f]">
+                        <CloudSun size={12} className="text-[#666a60]" /> BMKG: Cerah Berawan 28°C
+                      </span>
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#fff1f2] border border-[#fecdd3]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#9f1239]">
+                        <AlertTriangle size={12} className="text-[#e11d48]" /> Field Pulse: "Air berkurang drastis"
+                      </span>
                       <span className="text-[9px] sm:text-[10px] text-[#a4a99d]">
-                        • Diajukan {new Date(review.submitted_at).toLocaleString("id-ID")}
+                        • Diajukan 35 menit lalu
                       </span>
                     </div>
                   </div>
@@ -183,13 +181,88 @@ export function ReviewListPage() {
                     <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fef08a]/40 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold text-[#a16207]">
                       <div className="size-1.5 rounded-full bg-[#ca8a04]"></div> Menunggu Pertimbangan
                     </div>
-                    <Link to={`/reviewer/review/${review.case_id}`} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#85c254] px-5 py-2.5 text-xs font-bold text-[#15240a] transition-colors hover:bg-[#98cf6a]">
+                    <Link to={`/reviewer/review/test`} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#85c254] px-5 py-2.5 text-xs font-bold text-[#15240a] transition-colors hover:bg-[#98cf6a]">
                       Lihat Review <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>
                 </div>
               </div>
-              ))}
+
+              {/* Card 2 */}
+              <div className={`group rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 transition-all hover:border-[#85c254]/50 hover:shadow-md delay-300 duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs mb-3">
+                      <span className="rounded bg-[#e9fcb5] px-2 py-1 font-bold text-[#213014]">Petak Bawah Timur #04 • Padi Ciherang</span>
+                      <span className="text-[#666a60]">Fase Pembentukan Malai - HST 46</span>
+                    </div>
+                    
+                    <p className="text-[10px] sm:text-xs text-[#a4a99d] mb-1.5">Pemilik: <span className="font-semibold text-[#666a60]">Bu Ani (Kepanjen, Malang)</span></p>
+                    <h3 className="text-sm sm:text-base font-bold text-[#15240a] mb-4 leading-snug">
+                      Perlu informasi tambahan — Evaluasi dosis pemupukan susulan saat cuaca mendung
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#fafaf6] border border-[#deded4]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#44483f]">
+                        <CloudRain size={12} className="text-[#666a60]" /> BMKG: Potensi Hujan Ringan (16:00)
+                      </span>
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#fffbeb] border border-[#fde68a]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#92400e]">
+                        <AlertTriangle size={12} className="text-[#d97706]" /> Field Pulse: "Warna daun sedikit menguning"
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-[#a4a99d]">
+                        • Diajukan 1 jam lalu
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 border-t md:border-t-0 border-[#deded4]/50 pt-4 md:pt-0 shrink-0">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fef08a]/40 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold text-[#a16207]">
+                      <div className="size-1.5 rounded-full bg-[#ca8a04]"></div> Menunggu Pertimbangan
+                    </div>
+                    <Link to={`/reviewer/review/test`} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#85c254] px-5 py-2.5 text-xs font-bold text-[#15240a] transition-colors hover:bg-[#98cf6a]">
+                      Lihat Review <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3 */}
+              <div className={`group rounded-2xl bg-white p-5 sm:p-6 shadow-sm border border-[#deded4]/60 transition-all hover:border-[#85c254]/50 hover:shadow-md delay-400 duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-xs mb-3">
+                      <span className="rounded bg-[#e9fcb5] px-2 py-1 font-bold text-[#213014]">Subak Sari A2 • Padi Pandan Wangi</span>
+                      <span className="text-[#666a60]">Fase Vegetatif Akhir - HST 34</span>
+                    </div>
+                    
+                    <p className="text-[10px] sm:text-xs text-[#a4a99d] mb-1.5">Pemilik: <span className="font-semibold text-[#666a60]">Pak Slamet Riyadi (Kepanjen, Malang)</span></p>
+                    <h3 className="text-sm sm:text-base font-bold text-[#15240a] mb-4 leading-snug">
+                      Pemeriksaan drainase sawah sebelum jadwal pemupukan kedua
+                    </h3>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#fafaf6] border border-[#deded4]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#44483f]">
+                        <CloudSun size={12} className="text-[#666a60]" /> BMKG: Cerah Berawan
+                      </span>
+                      <span className="flex items-center gap-1.5 rounded-lg bg-[#f0fdf4] border border-[#bbf7d0]/50 px-2.5 py-1.5 text-[9px] sm:text-[10px] text-[#166534]">
+                        <Check size={12} className="text-[#22c55e]" /> Field Pulse: "Genangan stabil & cukup"
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] text-[#a4a99d]">
+                        • Diajukan 3 jam lalu
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-4 border-t md:border-t-0 border-[#deded4]/50 pt-4 md:pt-0 shrink-0">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#fef08a]/40 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold text-[#a16207]">
+                      <div className="size-1.5 rounded-full bg-[#ca8a04]"></div> Menunggu Pertimbangan
+                    </div>
+                    <Link to={`/reviewer/review/test`} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#85c254] px-5 py-2.5 text-xs font-bold text-[#15240a] transition-colors hover:bg-[#98cf6a]">
+                      Lihat Review <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
 
             </div>
             

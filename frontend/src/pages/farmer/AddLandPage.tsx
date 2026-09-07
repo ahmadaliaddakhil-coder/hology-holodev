@@ -143,7 +143,7 @@ export function AddLandPage() {
                 <ArrowLeft size={14} /> Kembali ke Daftar Lahan
               </a>
               <span className="flex shrink-0 items-center gap-2 rounded-full bg-[#e4f6b0] px-3 py-1 text-xs font-semibold">
-                <span className="size-2 rounded-full bg-[#85c254]" /> Langkah 1 dari 2
+                <span className="size-2 rounded-full bg-[#85c254]" /> Langkah 1 dari 3
               </span>
             </div>
 

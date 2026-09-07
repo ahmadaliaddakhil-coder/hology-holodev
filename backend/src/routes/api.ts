@@ -199,6 +199,22 @@ export function createApiRouter(
     });
   });
 
+  router.get('/reviewers', async (_request, response) => {
+    try {
+      const reviewers = await repositories.profiles.getByRole('reviewer');
+      response.json(reviewers.map((reviewer) => ({
+        id: reviewer.id,
+        display_name: reviewer.display_name,
+        role: reviewer.role,
+        avatar_url: reviewer.avatar_url ?? null,
+        created_at: reviewer.created_at,
+        updated_at: reviewer.updated_at,
+      })));
+    } catch (error) {
+      sendError(response, error);
+    }
+  });
+
   router.get('/reviewer/dashboard', async (request, response) => {
     try {
       requireReviewer(request);
@@ -711,6 +727,7 @@ export function createApiRouter(
       const body = bodyOf(request);
       const waterPresence = enumValue(body.water_presence, 'water_presence', new Set(['present', 'limited', 'none', 'unknown']));
       const irrigationFlow = enumValue(body.irrigation_flow, 'irrigation_flow', new Set(['flowing', 'limited', 'not_flowing', 'unknown']));
+      const waterTrend = body.water_trend === undefined ? undefined : enumValue(body.water_trend, 'water_trend', new Set(['kering', 'tetap', 'basah', 'gatau']));
       const evidence = await repositories.evidence.createEvidence({
         decision_case_id: caseId,
         type: 'field_pulse',
@@ -718,6 +735,7 @@ export function createApiRouter(
         payload: {
           water_presence: waterPresence,
           irrigation_flow: irrigationFlow,
+          water_trend: waterTrend,
           reported_by: body.reported_by,
           notes: typeof body.notes === 'string' ? body.notes.trim().slice(0, 500) : undefined,
         },
@@ -757,6 +775,7 @@ export function createApiRouter(
             observedAt: fieldEvidence.observed_at,
             waterPresence: fieldPayload.water_presence as FieldPulseEvidence['waterPresence'],
             irrigationFlow: fieldPayload.irrigation_flow as FieldPulseEvidence['irrigationFlow'],
+            waterTrend: fieldPayload.water_trend as FieldPulseEvidence['waterTrend'],
           }
         : undefined;
       const bmkg = bmkgEvidence
@@ -886,7 +905,12 @@ export function createApiRouter(
         // Farmer (case owner) requests a trusted review
         await ensureCaseAccess(request, decisionCaseId);
         const assessmentId = typeof body.assessment_id === 'string' ? body.assessment_id : undefined;
+        const selectedReviewerId = typeof body.reviewer_id === 'string' ? body.reviewer_id : undefined;
         const selectedOptionId = typeof body.selected_action_option_id === 'string' ? body.selected_action_option_id : undefined;
+        if (selectedReviewerId) {
+          const reviewer = await repositories.profiles.getById(selectedReviewerId);
+          if (!reviewer || reviewer.role !== 'reviewer') throw new Error('Selected reviewer is not available');
+        }
         if (selectedOptionId) {
           if (!assessmentId) throw new Error('assessment_id is required when selecting an action option');
           const options = await repositories.actionOptions.getByAssessmentId(assessmentId);
@@ -942,7 +966,12 @@ export function createApiRouter(
     try {
       const caseId = requiredString(request.params.decisionCaseId, 'decisionCaseId');
       await ensureCaseAccess(request, caseId);
-      response.json(await repositories.trustedReviews.getByDecisionCaseId(caseId));
+      const reviews = await repositories.trustedReviews.getByDecisionCaseId(caseId);
+      const reviewsWithProfiles = await Promise.all(reviews.map(async (review) => ({
+        ...review,
+        reviewer: await repositories.profiles.getById(review.reviewer_id),
+      })));
+      response.json(reviewsWithProfiles);
     } catch (error) {
       sendError(response, error);
     }

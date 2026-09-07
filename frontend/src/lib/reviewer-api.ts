@@ -10,6 +10,7 @@ export interface ApiPendingReview {
   growth_stage: string;
   decision_type: string;
   submitted_at: string;
+  assessment: { id: string; summary: string; basis_strength: string | null } | null;
   evidence: {
     bmkg: { condition: string; temp: number; text: string } | null;
     field_pulse: { condition: string; text: string } | null;

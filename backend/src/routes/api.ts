@@ -180,6 +180,23 @@ export function createApiRouter(
     };
   };
 
+  const reviewerAssignment = (context: any): { reviewer_id?: string; assessment_id?: string } | null => {
+    const evidence = (context?.evidence ?? [])
+      .filter((item: any) => item.type === 'user_input' && item.source === 'trusted_reviewer_assignment')
+      .sort((left: any, right: any) =>
+        new Date(right.collected_at ?? right.created_at ?? 0).getTime()
+        - new Date(left.collected_at ?? left.created_at ?? 0).getTime())[0];
+    return evidence?.payload ?? null;
+  };
+
+  const reviewerAssessment = (context: any, assessmentId?: string) => {
+    const assessments = [...(context?.assessments ?? [])].sort((a: any, b: any) => b.version - a.version);
+    return (assessmentId ? assessments.find((item: any) => item.id === assessmentId) : null)
+      ?? assessments.find((item: any) => item.status === 'active')
+      ?? assessments[0]
+      ?? null;
+  };
+
   const reviewerLocation = (land: any): string =>
     [land?.village, land?.district, land?.regency, land?.province].filter(Boolean).join(', ') || 'Lokasi belum tersedia';
 
@@ -225,7 +242,14 @@ export function createApiRouter(
       const completedReviews = await repositories.trustedReviews.getByReviewer(reviewerId);
       const completedContexts = await Promise.all(completedReviews.map((item) => repositories.decisionCases.getWithContext(item.decision_case_id)));
 
-      const pending = pendingContexts.filter(Boolean).map((context: any) => ({
+      const pending = pendingContexts.filter((context: any) => {
+        if (!context) return false;
+        const assignment = reviewerAssignment(context);
+        return !assignment?.reviewer_id || assignment.reviewer_id === reviewerId;
+      }).map((context: any) => {
+        const assignment = reviewerAssignment(context);
+        const assessment = reviewerAssessment(context, assignment?.assessment_id);
+        return ({
         review_id: context.id,
         case_id: context.id,
         land_name: context.land?.name ?? 'Lahan',
@@ -235,6 +259,7 @@ export function createApiRouter(
         growth_stage: context.crop_context?.growth_stage ?? 'unknown',
         decision_type: context.decision_type,
         submitted_at: context.updated_at ?? context.created_at,
+        assessment: assessment ? { id: assessment.id, summary: assessment.summary, basis_strength: assessment.basis_strength ?? null } : null,
         evidence: {
           bmkg: reviewerForecast(context),
           field_pulse: (() => {
@@ -242,7 +267,8 @@ export function createApiRouter(
             return pulse ? { condition: pulse.water_presence, text: pulse.notes ?? pulse.irrigation_flow } : null;
           })(),
         },
-      }));
+        });
+      });
       const completed = completedReviews.map((review, index) => {
         const context: any = completedContexts[index];
         const assessments = [...(context?.assessments ?? [])].sort((a: any, b: any) => b.version - a.version);
@@ -289,15 +315,20 @@ export function createApiRouter(
         return;
       }
       const reviewerId = currentProfileId(request);
+      const assignment = reviewerAssignment(context);
       const priorReview = (await repositories.trustedReviews.getByDecisionCaseId(decisionCaseId))
         .find((review) => review.reviewer_id === reviewerId) ?? null;
+      if (assignment?.reviewer_id && assignment.reviewer_id !== reviewerId && !priorReview) {
+        const error = new Error('Review is assigned to another reviewer');
+        error.name = 'ForbiddenError';
+        throw error;
+      }
       if (context.status !== 'review_pending' && !priorReview) {
         const error = new Error('Review is not available to this reviewer');
         error.name = 'ForbiddenError';
         throw error;
       }
-      const assessments = [...(context.assessments ?? [])].sort((a: any, b: any) => b.version - a.version);
-      const assessment = assessments.find((item: any) => item.status === 'active') ?? assessments[0] ?? null;
+      const assessment = reviewerAssessment(context, assignment?.assessment_id);
       const options = assessment ? withCatalogIds(await repositories.actionOptions.getByAssessmentId(assessment.id)) : [];
       response.json({
         case_id: context.id,
@@ -911,6 +942,12 @@ export function createApiRouter(
           const reviewer = await repositories.profiles.getById(selectedReviewerId);
           if (!reviewer || reviewer.role !== 'reviewer') throw new Error('Selected reviewer is not available');
         }
+        if (assessmentId) {
+          const assessment = await repositories.assessments.getById(assessmentId);
+          if (!assessment || assessment.decision_case_id !== decisionCaseId) {
+            throw new Error('assessment_id does not belong to the decision case');
+          }
+        }
         if (selectedOptionId) {
           if (!assessmentId) throw new Error('assessment_id is required when selecting an action option');
           const options = await repositories.actionOptions.getByAssessmentId(assessmentId);
@@ -922,6 +959,21 @@ export function createApiRouter(
           status: 'review_pending',
           selected_action_option_id: selectedOptionId,
         });
+        if (selectedReviewerId) {
+          await repositories.evidence.createEvidence({
+            decision_case_id: decisionCaseId,
+            type: 'user_input',
+            source: 'trusted_reviewer_assignment',
+            payload: {
+              reviewer_id: selectedReviewerId,
+              assessment_id: assessmentId,
+              selected_action_option_id: selectedOptionId,
+            },
+            freshness_status: 'fresh',
+            quality_status: 'high',
+            is_mock: false,
+          });
+        }
         response.status(202).json({ decision_case: updatedCase, status: 'review_pending' });
         return;
       }
@@ -940,6 +992,22 @@ export function createApiRouter(
         return;
       }
 
+      const context: any = await repositories.decisionCases.getWithContext(decisionCaseId);
+      const assignment = reviewerAssignment(context);
+      if (assignment?.reviewer_id && assignment.reviewer_id !== actorId) {
+        const error = new Error('Review is assigned to another reviewer');
+        error.name = 'ForbiddenError';
+        throw error;
+      }
+
+      const assessmentId = typeof body.assessment_id === 'string' ? body.assessment_id : assignment?.assessment_id;
+      if (assessmentId) {
+        const assessment = await repositories.assessments.getById(assessmentId);
+        if (!assessment || assessment.decision_case_id !== decisionCaseId) {
+          throw new Error('assessment_id does not belong to the decision case');
+        }
+      }
+
       const existingReview = (await repositories.trustedReviews.getByDecisionCaseId(decisionCaseId))
         .find((review) => review.reviewer_id === actorId);
       if (existingReview) {
@@ -949,7 +1017,7 @@ export function createApiRouter(
 
       const input: CreateTrustedReviewInput = {
         decision_case_id: decisionCaseId,
-        assessment_id: typeof body.assessment_id === 'string' ? body.assessment_id : undefined,
+        assessment_id: assessmentId,
         reviewer_id: actorId,
         status,
         comment: typeof body.comment === 'string' ? body.comment : undefined,

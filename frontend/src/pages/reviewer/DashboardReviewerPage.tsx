@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu,
-    Settings, UserCircle2, Warehouse, History,
+    UserCircle2, Warehouse, History,
     CheckCircle2, ClipboardCheck, ChevronDown, AlertTriangle,
     X
 } from "lucide-react";
 import { getUser } from "../../lib/auth";
 import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 // Komponen Navigasi Sidebar
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -94,7 +95,7 @@ export function DashboardReviewerPage() {
                                 <p className="text-[10px] text-[#666a60]">Reviewer</p>
                             </div>
                         </div>
-                        <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
+                        <LogoutButton compact />
                     </div>
                 </div>
             </aside>

@@ -9,6 +9,8 @@
     "start": "node dist/server.js",
     "spike:location": "tsx src/infrastructure/location/location-resolution-spike.ts",
     "test": "tsx --test tests/unit/bmkg-adapter.test.ts tests/unit/reasoning.test.ts tests/unit/llm-reasoning-enhancer.test.ts",
+    "test:ai-contract": "npm run build && node --test tests/contract/ai-reasoning-contract.test.mjs",
+    "test:ai-live": "npm run build && node scripts/live-ai-smoke.mjs",
     "typecheck:demo": "tsc --noEmit --ignoreConfig --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --esModuleInterop --skipLibCheck --types node scripts/demo-seed.ts scripts/demo-reset.ts",
     "demo:seed": "tsx scripts/demo-seed.ts",
     "demo:reset": "tsx scripts/demo-reset.ts"

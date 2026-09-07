@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Bell, Check, ChevronLeft, ChevronRight, History, Leaf, Menu, Minus, Plus, Sprout, Sun, UserCircle2, Warehouse, Waves, X } from "lucide-react";
+import { Bell, Check, ChevronLeft, History, Leaf, Menu, Minus, Plus, Sprout, UserCircle2, Warehouse, Waves, X } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { clearLandDraft, readLandDraft } from "../../lib/land-draft";
 import { farmerApi, type ApiCropContext } from "../../services/farmer-api";

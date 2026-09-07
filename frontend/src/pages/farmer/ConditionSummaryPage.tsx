@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowRight, Bell, CloudSun, Database, Droplets, History, Leaf, Menu, Sprout, UserCircle2, Warehouse, Wind, X } from "lucide-react";
+import { ArrowRight, Bell, CloudSun, Droplets, History, Leaf, Menu, Sprout, UserCircle2, Warehouse, Wind, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { ensureAssessment, type WorkflowData } from "../../lib/decision-workflow";
 import { farmerApi, type ApiEvidence } from "../../services/farmer-api";
@@ -7,7 +7,6 @@ import { getUser } from "../../lib/auth";
 import { LogoutButton } from "../../components/auth/LogoutButton";
 import { WeatherStatus } from "../../components/farmer/WeatherStatus";
 
-const stage: Record<string, string> = { vegetative: "Vegetatif", flowering: "Berbunga", ripening: "Pematangan", unknown: "Belum diketahui" };
 type Forecast = { weather_desc?: string; t?: number; hu?: number; ws?: number; wd?: string; tcc?: number; target_time_utc?: string; target_time_local?: string };
 const value = (input: unknown) => input == null || input === "" ? "Belum tersedia" : String(input);
 const forecastFrom = (evidence: ApiEvidence | null): Forecast | undefined => { const payload = evidence?.payload as { forecast_slots?: Forecast[]; payload?: { forecast_slots?: Forecast[] } } | undefined; const slots = payload?.forecast_slots ?? payload?.payload?.forecast_slots; return slots?.find((slot) => new Date(slot.target_time_utc ?? slot.target_time_local ?? 0).getTime() >= Date.now()) ?? slots?.[0]; };

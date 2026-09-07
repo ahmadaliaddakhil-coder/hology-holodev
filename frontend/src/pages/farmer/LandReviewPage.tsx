@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, Bell, Check, CircleHelp, History, Leaf, Menu, Sprout, UserCircle2, Warehouse, Waves, X } from "lucide-react";
+import { ArrowRight, Bell, Check, CircleHelp, History, Leaf, Menu, Sprout, UserCircle2, Warehouse, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { farmerApi, type ApiCropContext, type ApiLand } from "../../services/farmer-api";

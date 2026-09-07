@@ -48,7 +48,7 @@ export function ReviewerProfilePage() {
       {/* Overlay Mobile Sidebar */}
       {mobileNavOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 xl:hidden" 
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden"
           onClick={() => setMobileNavOpen(false)}
         />
       )}
@@ -61,7 +61,7 @@ export function ReviewerProfilePage() {
             <div className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white">
               <Leaf size={15} className="text-[#85c254]" /> REMBUKTANI
             </div>
-            <button className="xl:hidden text-[#44483f] hover:text-[#15240a] transition-colors" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu">
+            <button className="md:hidden text-[#44483f] hover:text-[#15240a] transition-colors" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu">
               <X size={20} />
             </button>
           </div>
@@ -102,7 +102,7 @@ export function ReviewerProfilePage() {
         
         {/* TOPBAR STANDAR */}
 <header className="fixed top-0 left-0 right-0 md:left-[260px] z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">          <div className="flex items-center gap-3">
-            <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 xl:hidden" onClick={() => setMobileNavOpen(true)}>
+            <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 md:hidden" onClick={() => setMobileNavOpen(true)}>
               <Menu size={20} />
             </button>
             <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">

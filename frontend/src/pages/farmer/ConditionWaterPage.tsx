@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, Bell, Check, ChevronLeft, CircleHelp, History, Leaf, Menu, Search, Sprout, SunDim, UserCircle2, Warehouse, Waves, X } from "lucide-react";
+import { Bell, Check, ChevronLeft, CircleHelp, History, Leaf, Menu, Search, Sprout, SunDim, UserCircle2, Warehouse, Waves, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { saveWorkflow } from "../../lib/decision-workflow";

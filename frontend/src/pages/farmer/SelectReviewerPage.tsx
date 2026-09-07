@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Bell, Check, ChevronRight, CloudSun, History, Leaf, Menu, Settings, Sprout, UserCircle2, Users, Warehouse, X } from "lucide-react";
+import { ArrowRight, Bell, Check, ChevronRight, CloudSun, History, Leaf, Menu, Settings, Sprout, UserCircle2, Users, Warehouse, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ErrorCard, LoadingCard } from "../../components/farmer/WorkflowLayout";
 import { ensureAssessment, readWorkflow, saveWorkflow, type WorkflowData } from "../../lib/decision-workflow";

@@ -52,7 +52,7 @@ export function DashboardReviewerPage() {
             {/* Overlay Mobile Sidebar */}
             {mobileNavOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 xl:hidden"
+                    className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden"
                     onClick={() => setMobileNavOpen(false)}
                 />
             )}
@@ -64,7 +64,7 @@ export function DashboardReviewerPage() {
                         <div className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white">
                             <Leaf size={15} className="text-[#85c254]" /> REMBUKTANI
                         </div>
-                        <button className="xl:hidden text-[#44483f] hover:text-[#15240a] transition-colors" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu">
+                        <button className="md:hidden text-[#44483f] hover:text-[#15240a] transition-colors" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu">
                             <X size={20} />
                         </button>
                     </div>
@@ -104,7 +104,7 @@ export function DashboardReviewerPage() {
             <div className="flex-1 flex flex-col min-w-0 md:ml-[260px]">
                 {/* TOPBAR STANDAR */}
                 <header className="fixed top-0 left-0 right-0 md:left-[260px] z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">          <div className="flex items-center gap-3">
-                    <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 xl:hidden" onClick={() => setMobileNavOpen(true)}>
+                    <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 md:hidden" onClick={() => setMobileNavOpen(true)}>
                         <Menu size={20} />
                     </button>
                     <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">
@@ -123,7 +123,7 @@ export function DashboardReviewerPage() {
                 </header>
 
                 {/* CONTENT BODY */}
-                <main className="mx-auto max-w-[1200px] space-y-6 px-4 py-6 sm:px-8 lg:py-8">
+                <main className="mx-auto w-full max-w-[1200px] space-y-6 px-4 pb-6 pt-20 sm:px-8 lg:pb-8 lg:pt-20">
                     {isLoading ? (
                         <div className="animate-pulse space-y-8">
                             <div className="h-10 w-64 bg-white/60 rounded-xl mb-4"></div>
@@ -260,7 +260,7 @@ export function DashboardReviewerPage() {
                                             </div>
                                             <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#deded4]/50">
                                                 <span className="text-[9px] sm:text-[10px] text-[#a4a99d] mb-1.5">{new Date(history.responded_at).toLocaleDateString("id-ID")}</span>
-                                                <Link to={`/reviewer/history/${history.review_id}`} className="text-[10px] sm:text-xs font-bold text-[#15240a] hover:text-[#85c254] flex items-center gap-1 transition-colors">
+                                                <Link to="/reviewer/history" className="text-[10px] sm:text-xs font-bold text-[#15240a] hover:text-[#85c254] flex items-center gap-1 transition-colors">
                                                     Detail Saran & Keputusan <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
                                                 </Link>
                                             </div>

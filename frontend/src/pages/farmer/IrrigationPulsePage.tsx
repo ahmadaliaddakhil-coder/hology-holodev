@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, Bell, Check, ChevronLeft, CircleHelp, History, Leaf, Menu, Navigation, Sprout, UserCircle2, Warehouse, Waves, X } from "lucide-react";
+import { ArrowRight, Bell, Check, ChevronLeft, CircleHelp, History, Leaf, Menu, Sprout, UserCircle2, Warehouse, Waves, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ErrorCard, LoadingCard } from "../../components/farmer/WorkflowLayout";

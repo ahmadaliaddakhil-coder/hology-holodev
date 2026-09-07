@@ -56,12 +56,12 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
           >
             <Sprout size={18} /> Lahan
           </a>
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]">
+          <a href="/farmer/history" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]">
             <FileSearch size={18} /> Riwayat
-          </button>
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]">
+          </a>
+          <a href="/farmer/profile" className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#44483f] hover:bg-[#edf4dc]">
             <UserCircle2 size={18} /> Profil
-          </button>
+          </a>
         </nav>
       </div>
 

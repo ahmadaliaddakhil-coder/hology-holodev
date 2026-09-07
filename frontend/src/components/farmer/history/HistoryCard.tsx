@@ -68,7 +68,7 @@ export default function HistoryCard({
         {/* Decision */}
         <div>
           <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-[#364c23]">
-            Keputusan Sah Mandor
+            Keputusan Sah Petani
           </p>
 
           <div className="flex gap-2">
@@ -167,17 +167,6 @@ export default function HistoryCard({
             </div>
           </div>
 
-          {isActive && (
-            <div className="mt-2 ml-6 flex items-center gap-2">
-              <span className="rounded bg-[#def0ab] px-2 py-1 text-[10px] font-semibold text-[#b98532]">
-                Instruksi Berbatas Waktu
-              </span>
-
-              <span className="text-xs font-semibold text-[#44483f]">
-                · Eksekusi sore hari ini
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Evidence */}
@@ -200,12 +189,13 @@ export default function HistoryCard({
 
           <div className="flex items-center gap-2">
             {isActive && (
-              <button
-                type="button"
+              <a
+                href={`/farmer/history/${item.id}`}
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f3ec] text-sm transition-all duration-200 hover:bg-[#e9fcb5] active:scale-95"
+                aria-label="Buka risalah"
               >
                 ↗
-              </button>
+              </a>
             )}
 
             <a

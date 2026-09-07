@@ -45,7 +45,7 @@ export function OptionalReviewPage() {
       </div>
       <div className="space-y-4 px-0.5">
         <div className="rounded-lg bg-[#e9fcb5] px-3 py-2.5"><div className="flex items-center gap-1.5 text-[10px] font-bold"><span className="size-1.5 rounded-full bg-[#83c64f]" />Sinkronisasi BMKG</div><p className="mt-0.5 pl-3 text-[10px] text-[#56652e]">Data cuaca aktif</p></div>
-        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-full bg-[#15240a] text-white"><UserCircle2 size={16} /></span><div><p className="text-[10px] font-bold">{user?.display_name || user?.displayName || "Pak Slamet"}</p><p className="text-[9px] text-[#7b8174]">Ketua Poktan</p></div></div><Link to="/farmer/profile" className="text-[#56652e]" aria-label="Buka profil"><CircleHelp size={15} /></Link></div>
+        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-full bg-[#15240a] text-white"><UserCircle2 size={16} /></span><div><p className="text-[10px] font-bold">{user?.display_name || user?.displayName || "Sahabat Tani"}</p><p className="text-[9px] text-[#7b8174]">Petani</p></div></div><Link to="/farmer/profile" className="text-[#56652e]" aria-label="Buka profil"><CircleHelp size={15} /></Link></div>
       </div>
     </aside>
 

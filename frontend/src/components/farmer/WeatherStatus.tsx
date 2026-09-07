@@ -28,7 +28,7 @@ export function WeatherStatus({ preferredLandId }: WeatherStatusProps) {
 
       const fallback = preferredLandId ? lands.find((land) => land.id === preferredLandId) ?? lands[0] : lands[0];
       let selected = fallback;
-      if (navigator.geolocation) {
+      if (!preferredLandId && navigator.geolocation) {
         try {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { maximumAge: 300000, timeout: 3000 });

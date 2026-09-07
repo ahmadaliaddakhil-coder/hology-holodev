@@ -44,7 +44,8 @@ export function CropContextPage() {
         regency: draft.regency,
         district: draft.district,
         village: draft.village,
-        location_source: "client_provided",
+        adm4_code: draft.adm4Code,
+        location_source: draft.locationSource || "client_provided",
       });
       createdLandId = land.id;
       const plantedAt = new Date();

@@ -134,6 +134,55 @@ export function createApiRouter(
     await ensureLandAccess(request, decisionCase.land_id);
   };
 
+  const requireReviewer = (request: Request): void => {
+    if (!isReviewerRole(request.auth?.profile.role)) {
+      const error = new Error('Only reviewer role can access reviewer resources');
+      error.name = 'ForbiddenError';
+      throw error;
+    }
+  };
+
+  const newestEvidence = (context: any, type: EvidenceType): any | null => {
+    const matches = (context?.evidence ?? []).filter((item: any) => item.type === type);
+    return matches.sort((left: any, right: any) =>
+      new Date(right.collected_at ?? right.created_at ?? 0).getTime()
+      - new Date(left.collected_at ?? left.created_at ?? 0).getTime())[0] ?? null;
+  };
+
+  const reviewerForecast = (context: any) => {
+    const evidence = newestEvidence(context, 'bmkg_forecast');
+    const slots = evidence?.payload?.forecast_slots ?? evidence?.payload?.payload?.forecast_slots;
+    const slot = Array.isArray(slots)
+      ? slots.find((value: any) => new Date(value.target_time_utc ?? value.target_time_local ?? 0).getTime() >= Date.now()) ?? slots[0]
+      : undefined;
+    return slot ? {
+      condition: slot.weather_desc ?? 'Prakiraan tersedia',
+      temp: typeof slot.t === 'number' ? slot.t : 0,
+      humidity: typeof slot.hu === 'number' ? slot.hu : null,
+      wind_speed: typeof slot.ws === 'number' ? slot.ws : null,
+      wind_direction: slot.wd ?? null,
+      target_time: slot.target_time_local ?? slot.target_time_utc ?? null,
+      source: evidence.source ?? 'BMKG',
+      freshness_status: evidence.freshness_status ?? null,
+    } : null;
+  };
+
+  const reviewerFieldPulse = (context: any) => {
+    const evidence = newestEvidence(context, 'field_pulse');
+    if (!evidence) return null;
+    const payload = evidence.payload ?? {};
+    return {
+      water_presence: String(payload.water_presence ?? 'unknown'),
+      irrigation_flow: String(payload.irrigation_flow ?? 'unknown'),
+      notes: typeof payload.notes === 'string' ? payload.notes : null,
+      observed_at: evidence.observed_at ?? evidence.collected_at ?? null,
+      freshness_status: evidence.freshness_status ?? null,
+    };
+  };
+
+  const reviewerLocation = (land: any): string =>
+    [land?.village, land?.district, land?.regency, land?.province].filter(Boolean).join(', ') || 'Lokasi belum tersedia';
+
   router.get('/reasoning/status', (_request, response) => {
     response.json({ mode: config.llmEnabled ? 'llm_enhanced' : 'deterministic_fallback', provider: config.llmEnabled ? 'google-gemini' : null, model: config.llmEnabled ? config.llmModel : null, instance_id: reasoningInstanceId });
   });
@@ -152,11 +201,7 @@ export function createApiRouter(
 
   router.get('/reviewer/dashboard', async (request, response) => {
     try {
-      if (!isReviewerRole(request.auth?.profile.role)) {
-        const error = new Error('Only reviewer role can access reviewer dashboard');
-        error.name = 'ForbiddenError';
-        throw error;
-      }
+      requireReviewer(request);
 
       const reviewerId = currentProfileId(request);
       const pendingCases = await repositories.decisionCases.getAll({ status: 'review_pending' });
@@ -164,33 +209,30 @@ export function createApiRouter(
       const completedReviews = await repositories.trustedReviews.getByReviewer(reviewerId);
       const completedContexts = await Promise.all(completedReviews.map((item) => repositories.decisionCases.getWithContext(item.decision_case_id)));
 
-      const forecast = (context: any) => {
-        const evidence = context?.evidence?.find((item: any) => item.type === 'bmkg_forecast');
-        const slots = evidence?.payload?.forecast_slots ?? evidence?.payload?.payload?.forecast_slots;
-        const slot = Array.isArray(slots) ? slots.find((value: any) => new Date(value.target_time_utc ?? value.target_time_local ?? 0).getTime() >= Date.now()) ?? slots[0] : undefined;
-        return slot ? { condition: slot.weather_desc ?? 'Prakiraan tersedia', temp: typeof slot.t === 'number' ? slot.t : 0, text: evidence.source ?? 'BMKG' } : null;
-      };
-      const fieldPulse = (context: any) => {
-        const evidence = context?.evidence?.find((item: any) => item.type === 'field_pulse');
-        if (!evidence) return null;
-        const payload = evidence.payload ?? {};
-        return { condition: String(payload.water_presence ?? 'unknown'), text: String(payload.irrigation_flow ?? 'unknown') };
-      };
-      const locationOf = (land: any) => [land?.village, land?.district, land?.regency].filter(Boolean).join(', ') || 'Lokasi belum tersedia';
       const pending = pendingContexts.filter(Boolean).map((context: any) => ({
         review_id: context.id,
         case_id: context.id,
         land_name: context.land?.name ?? 'Lahan',
         farmer_name: context.created_by_profile?.display_name ?? 'Petani',
-        location: locationOf(context.land),
+        location: reviewerLocation(context.land),
         crop_name: context.crop_context?.crop_name ?? 'Tanaman belum dicatat',
         growth_stage: context.crop_context?.growth_stage ?? 'unknown',
         decision_type: context.decision_type,
         submitted_at: context.updated_at ?? context.created_at,
-        evidence: { bmkg: forecast(context), field_pulse: fieldPulse(context) },
+        evidence: {
+          bmkg: reviewerForecast(context),
+          field_pulse: (() => {
+            const pulse = reviewerFieldPulse(context);
+            return pulse ? { condition: pulse.water_presence, text: pulse.notes ?? pulse.irrigation_flow } : null;
+          })(),
+        },
       }));
       const completed = completedReviews.map((review, index) => {
         const context: any = completedContexts[index];
+        const assessments = [...(context?.assessments ?? [])].sort((a: any, b: any) => b.version - a.version);
+        const assessment = assessments.find((item: any) => item.status === 'active') ?? assessments[0] ?? null;
+        const bmkg = reviewerForecast(context);
+        const pulse = reviewerFieldPulse(context);
         return {
           review_id: review.id,
           land_name: context?.land?.name ?? 'Lahan',
@@ -199,6 +241,12 @@ export function createApiRouter(
           status: review.status,
           comment: review.comment ?? '',
           responded_at: review.responded_at ?? review.created_at,
+          assessment: assessment ? { summary: assessment.summary, basis_strength: assessment.basis_strength ?? null } : null,
+          evidence_labels: [
+            bmkg ? `BMKG (${bmkg.condition} ${bmkg.temp}°C)` : null,
+            pulse ? `Kondisi Lapangan (${pulse.water_presence}; ${pulse.irrigation_flow})` : null,
+            context?.crop_context ? `Tanaman (${[context.crop_context.crop_name, context.crop_context.variety_name].filter(Boolean).join(' ')})` : null,
+          ].filter(Boolean),
         };
       });
 
@@ -209,6 +257,68 @@ export function createApiRouter(
         weather: pending[0]?.evidence.bmkg ?? null,
         pending_reviews: pending,
         completed_reviews: completed,
+      });
+    } catch (error) {
+      sendError(response, error);
+    }
+  });
+
+  router.get('/reviewer/reviews/:decisionCaseId', async (request, response) => {
+    try {
+      requireReviewer(request);
+      const decisionCaseId = requiredString(request.params.decisionCaseId, 'decisionCaseId');
+      const context: any = await repositories.decisionCases.getWithContext(decisionCaseId);
+      if (!context) {
+        response.status(404).json({ error: 'Decision case not found' });
+        return;
+      }
+      const reviewerId = currentProfileId(request);
+      const priorReview = (await repositories.trustedReviews.getByDecisionCaseId(decisionCaseId))
+        .find((review) => review.reviewer_id === reviewerId) ?? null;
+      if (context.status !== 'review_pending' && !priorReview) {
+        const error = new Error('Review is not available to this reviewer');
+        error.name = 'ForbiddenError';
+        throw error;
+      }
+      const assessments = [...(context.assessments ?? [])].sort((a: any, b: any) => b.version - a.version);
+      const assessment = assessments.find((item: any) => item.status === 'active') ?? assessments[0] ?? null;
+      const options = assessment ? withCatalogIds(await repositories.actionOptions.getByAssessmentId(assessment.id)) : [];
+      response.json({
+        case_id: context.id,
+        status: context.status,
+        decision_type: context.decision_type,
+        submitted_at: context.updated_at ?? context.created_at,
+        land: {
+          id: context.land?.id,
+          name: context.land?.name ?? 'Lahan',
+          description: context.land?.description ?? null,
+          location: reviewerLocation(context.land),
+          village: context.land?.village ?? null,
+          district: context.land?.district ?? null,
+          regency: context.land?.regency ?? null,
+          province: context.land?.province ?? null,
+          latitude: context.land?.latitude ?? null,
+          longitude: context.land?.longitude ?? null,
+        },
+        farmer: { name: context.created_by_profile?.display_name ?? 'Petani' },
+        crop: context.crop_context ? {
+          name: context.crop_context.crop_name,
+          variety: context.crop_context.variety_name ?? null,
+          growth_stage: context.crop_context.growth_stage,
+          planting_date: context.crop_context.planting_date ?? null,
+        } : null,
+        evidence: { bmkg: reviewerForecast(context), field_pulse: reviewerFieldPulse(context) },
+        assessment: assessment ? {
+          id: assessment.id,
+          summary: assessment.summary,
+          basis_strength: assessment.basis_strength ?? null,
+          factors: assessment.factors ?? [],
+          missing_evidence: assessment.missing_evidence ?? [],
+          limitations: assessment.limitations ?? [],
+          rule_version: assessment.rule_version ?? null,
+        } : null,
+        action_options: options,
+        prior_review: priorReview,
       });
     } catch (error) {
       sendError(response, error);
@@ -789,6 +899,17 @@ export function createApiRouter(
 
       const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
       if (!decisionCase) throw new Error('Decision case not found');
+      if (decisionCase.status !== 'review_pending') {
+        response.status(409).json({ error: 'Decision case is not awaiting review' });
+        return;
+      }
+
+      const existingReview = (await repositories.trustedReviews.getByDecisionCaseId(decisionCaseId))
+        .find((review) => review.reviewer_id === actorId);
+      if (existingReview) {
+        response.status(409).json({ error: 'Review has already been submitted' });
+        return;
+      }
 
       const input: CreateTrustedReviewInput = {
         decision_case_id: decisionCaseId,
@@ -798,7 +919,7 @@ export function createApiRouter(
         comment: typeof body.comment === 'string' ? body.comment : undefined,
       };
       const review = await repositories.trustedReviews.submitReview(input);
-      await repositories.decisionCases.updateStatus(decisionCaseId, status === 'approve' ? 'ready_for_decision' : 'review_pending');
+      await repositories.decisionCases.updateStatus(decisionCaseId, 'ready_for_decision');
       response.status(201).json(review);
     } catch (error) {
       sendError(response, error);

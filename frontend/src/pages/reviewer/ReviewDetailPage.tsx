@@ -6,7 +6,9 @@ import {
   MapPin, Droplets, Info, FileText, Circle, CheckCircle2,
   Send
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { reviewerApi, type ApiReviewerReviewDetail } from "../../lib/reviewer-api";
+import { getUser } from "../../lib/auth";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -23,16 +25,62 @@ function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse
 }
 
 export function ReviewDetailPage() {  
+  const { reviewId = "" } = useParams();
+  const navigate = useNavigate();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedDecision, setSelectedDecision] = useState("tambahan"); // 'jelas', 'tambahan', 'lain'
-  const [noteText, setNoteText] = useState("Sebaiknya periksa kondisi pintu air hilir terlebih dahulu karena sumber air belum diketahui secara pasti dari sensor cuaca.");
+  const [noteText, setNoteText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [data, setData] = useState<ApiReviewerReviewDetail | null>(null);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    reviewerApi.getReviewDetail(reviewId).then((result) => {
+      setData(result);
+      const savedDraft = sessionStorage.getItem(`rembuktani.review-draft.${reviewId}`);
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft) as { selectedDecision?: string; noteText?: string };
+          if (draft.selectedDecision) setSelectedDecision(draft.selectedDecision);
+          if (typeof draft.noteText === "string") setNoteText(draft.noteText);
+        } catch { sessionStorage.removeItem(`rembuktani.review-draft.${reviewId}`); }
+      } else if (result.prior_review?.comment) setNoteText(result.prior_review.comment);
+    }).catch((reason) => setError(reason instanceof Error ? reason.message : "Gagal memuat detail review"));
     return () => clearTimeout(timer);
-  }, []);
+  }, [reviewId]);
+
+  const submitReview = async () => {
+    if (!data || isSubmitting) return;
+    setIsSubmitting(true);
+    setError("");
+    try {
+      await reviewerApi.submitReview(data.case_id, {
+        status: selectedDecision === "jelas" ? "approve" : "modify",
+        assessment_id: data.assessment?.id,
+        comment: noteText.trim() || undefined,
+      });
+      sessionStorage.removeItem(`rembuktani.review-draft.${reviewId}`);
+      setIsModalOpen(false);
+      navigate("/reviewer/history", { replace: true });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Pertimbangan gagal dikirim");
+      setIsModalOpen(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const reviewerName = getUser()?.display_name || "Reviewer";
+  const farmerName = data?.farmer.name || "Petani";
+  const landName = data?.land.name || "Lahan";
+  const location = data?.land.location || "Lokasi belum tersedia";
+  const cropLabel = data?.crop ? [data.crop.name, data.crop.variety].filter(Boolean).join(" ") : "Tanaman belum dicatat";
+  const plantingDays = data?.crop?.planting_date && data.submitted_at
+    ? Math.max(0, Math.floor((new Date(data.submitted_at).getTime() - new Date(data.crop.planting_date).getTime()) / 86400000))
+    : null;
 
   return (
     // MASTER WRAPPER
@@ -58,14 +106,14 @@ export function ReviewDetailPage() {
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-[#15240a]">Kirim Pertimbangan?</h2>
                 <p className="mt-2 text-xs sm:text-sm text-[#666a60] leading-relaxed">
-                  Pertimbangan Anda akan dikirim langsung kepada Pak Budi sebagai bahan rujukan sebelum mengambil keputusan.
+                  Pertimbangan Anda akan dikirim langsung kepada {farmerName} sebagai bahan rujukan sebelum mengambil keputusan.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 rounded-2xl bg-[#fafaf6] p-4 sm:p-5 border border-[#deded4]/60">
               <p className="text-[10px] sm:text-xs text-[#44483f]">
-                <strong className="text-[#15240a]">Lahan:</strong> Blok Tirto A3 • Pak Budi (Kepanjen, Malang)
+                <strong className="text-[#15240a]">Lahan:</strong> {landName} • {farmerName} ({location})
               </p>
               <div className="mt-3 inline-flex items-center gap-1.5 rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014]">
                 <Check size={12} strokeWidth={3} /> 
@@ -93,13 +141,11 @@ export function ReviewDetailPage() {
                 Periksa Lagi
               </button>
               <button 
-                onClick={() => {
-                  // Aksi API / Routing dijalankan di sini
-                  setIsModalOpen(false);
-                }}
+                onClick={submitReview}
+                disabled={isSubmitting}
                 className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#85c254] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#15240a] transition hover:bg-[#98cf6a] shadow-md"
               >
-                Kirim Sekarang <ArrowRight size={16} />
+                {isSubmitting ? "Mengirim..." : "Kirim Sekarang"} <ArrowRight size={16} />
               </button>
             </div>
           </div>
@@ -141,8 +187,8 @@ export function ReviewDetailPage() {
                 <UserCircle2 size={15} />
               </div>
               <div>
-                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">Pak Slamet</p>
-                <p className="text-[10px] text-[#666a60]">Ketua Poktan</p>
+                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">{reviewerName}</p>
+                <p className="text-[10px] text-[#666a60]">Reviewer</p>
               </div>
             </div>
             <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
@@ -159,12 +205,12 @@ export function ReviewDetailPage() {
               <Menu size={20} />
             </button>
             <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">
-              Wilayah: Subak Jatiluwih
+              Wilayah: {location}
             </span>
           </div>
           <div className="flex items-center gap-3 sm:gap-5">
             <span className="hidden items-center gap-1.5 text-xs font-medium text-[#44483f] sm:flex">
-              <CloudSun size={16} /> Cerah Berawan 28°C
+              <CloudSun size={16} /> {data?.evidence.bmkg ? `${data.evidence.bmkg.condition} ${data.evidence.bmkg.temp}°C` : "Cuaca belum tersedia"}
             </span>
             <Bell size={18} className="cursor-pointer text-[#44483f] transition hover:text-[#15240a]" />
             <div className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#0d1b03] text-white">
@@ -179,20 +225,20 @@ export function ReviewDetailPage() {
             
             {/* Header Section */}
             <div className={`mb-8 transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-              <button className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-[#666a60] transition hover:text-[#15240a] mb-5">
+              <button onClick={() => navigate("/reviewer/review")} className="flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-[#666a60] transition hover:text-[#15240a] mb-5">
                 <ArrowLeft size={14} /> Kembali ke Antrean Review
               </button>
               
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-[#666a60] mb-2">
-                    <FileText size={14} /> Permintaan Review #RV-2026-089
+                    <FileText size={14} /> Permintaan Review #{data?.case_id.slice(0, 8).toUpperCase() || "-"}
                   </div>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold leading-tight text-[#15240a]">
-                    Tinjauan Pertimbangan: Blok Tirto A3
+                    Tinjauan Pertimbangan: {landName}
                   </h1>
                   <p className="mt-2 text-xs sm:text-sm text-[#44483f] leading-relaxed max-w-2xl">
-                    Pahami konteks lahan dan bukti lapangan sebelum memberikan pertimbangan bagi Pak Budi.
+                    Pahami konteks lahan dan bukti lapangan sebelum memberikan pertimbangan bagi {farmerName}.
                   </p>
                 </div>
                 <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#fef08a]/40 px-3 py-1.5 text-[10px] sm:text-xs font-bold text-[#a16207]">
@@ -213,7 +259,7 @@ export function ReviewDetailPage() {
                     <h2 className="flex items-center gap-2 text-[10px] sm:text-xs font-bold tracking-widest text-[#15240a] uppercase">
                       <div className="size-2 rounded-full bg-[#85c254]"></div> Informasi Lahan
                     </h2>
-                    <span className="text-[10px] sm:text-[11px] text-[#a4a99d]">Diajukan 35 menit lalu</span>
+                    <span className="text-[10px] sm:text-[11px] text-[#a4a99d]">Diajukan {data ? new Date(data.submitted_at).toLocaleString("id-ID") : "-"}</span>
                   </div>
                   
                   <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-[#deded4]/60 flex flex-col sm:flex-row gap-4 sm:gap-5">
@@ -221,23 +267,23 @@ export function ReviewDetailPage() {
                     <div className="relative h-32 sm:h-auto sm:w-40 shrink-0 overflow-hidden rounded-xl bg-[#2a3a22]">
                        <img src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?auto=format&fit=crop&q=80&w=400" alt="Peta Lahan" className="w-full h-full object-cover opacity-80" />
                        <div className="absolute bottom-2 left-2 right-2 rounded bg-black/60 backdrop-blur-md px-2 py-1 text-[9px] text-white flex items-center gap-1">
-                          <MapPin size={10} className="text-[#85c254]" /> Kepanjen, Malang
+                          <MapPin size={10} className="text-[#85c254]" /> {location}
                        </div>
                     </div>
                     {/* Detail Teks */}
                     <div className="flex-1 space-y-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-base sm:text-lg font-bold text-[#15240a]">Blok Tirto A3</h3>
+                          <h3 className="text-base sm:text-lg font-bold text-[#15240a]">{landName}</h3>
                           <span className="rounded bg-[#e9fcb5] px-2 py-0.5 text-[9px] font-bold text-[#3f6212]">Petak Sekunder</span>
                         </div>
-                        <p className="text-[10px] sm:text-[11px] text-[#666a60]">Pemilik: <strong className="text-[#15240a]">Pak Budi</strong></p>
+                        <p className="text-[10px] sm:text-[11px] text-[#666a60]">Pemilik: <strong className="text-[#15240a]">{farmerName}</strong></p>
                       </div>
                       <div className="rounded-lg bg-[#fafaf6] px-3 py-2 text-[10px] sm:text-xs text-[#44483f] flex items-center gap-2 border border-[#deded4]/40">
-                        <Sprout size={14} className="text-[#85c254]" /> Padi Inpari 32 — Berbunga (HST58)
+                        <Sprout size={14} className="text-[#85c254]" /> {cropLabel} — {data?.crop?.growth_stage || "unknown"}{plantingDays !== null ? ` (HST ${plantingDays})` : ""}
                       </div>
                       <div className="text-[10px] sm:text-[11px] text-[#666a60] flex items-center gap-1.5">
-                        <span className="font-semibold">📐 Luas:</span> 0.8 Ha
+                        <span className="font-semibold">Koordinat:</span> {data?.land.latitude ?? "-"}, {data?.land.longitude ?? "-"}
                       </div>
                     </div>
                   </div>
@@ -258,18 +304,18 @@ export function ReviewDetailPage() {
                       <h3 className="text-xs sm:text-sm font-bold text-[#15240a] mb-3">Cuaca BMKG</h3>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-[#fafaf6] p-3 rounded-xl border border-[#deded4]/40">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-semibold text-[#44483f]">
-                          <span className="flex items-center gap-1.5"><CloudSun size={14} className="text-[#d97706]" /> Cerah Berawan</span>
+                          <span className="flex items-center gap-1.5"><CloudSun size={14} className="text-[#d97706]" /> {data?.evidence.bmkg?.condition || "Belum tersedia"}</span>
                           <span className="text-[#deded4] hidden sm:inline">•</span>
-                          <span>24°C</span>
+                          <span>{data?.evidence.bmkg ? `${data.evidence.bmkg.temp}°C` : "-"}</span>
                           <span className="text-[#deded4] hidden sm:inline">•</span>
-                          <span>Kelembapan 85%</span>
+                          <span>Kelembapan {data?.evidence.bmkg?.humidity ?? "-"}%</span>
                         </div>
                         <button className="text-[10px] font-bold text-[#85c254] hover:text-[#56652e]">Lihat Detail ˅</button>
                       </div>
                       <div className="flex justify-between text-[9px] sm:text-[10px] text-[#666a60]">
-                        <span>Pembaruan: 18:00 WIB</span>
-                        <span>Angin: 13 km/j</span>
-                        <span>Peluang Hujan: 20%</span>
+                        <span>Pembaruan: {data?.evidence.bmkg?.target_time ? new Date(data.evidence.bmkg.target_time).toLocaleString("id-ID") : "-"}</span>
+                        <span>Angin: {data?.evidence.bmkg?.wind_speed ?? "-"} km/j</span>
+                        <span>Sumber: {data?.evidence.bmkg?.source || "BMKG"}</span>
                       </div>
                     </div>
 
@@ -278,15 +324,15 @@ export function ReviewDetailPage() {
                       <h3 className="text-xs sm:text-sm font-bold text-[#15240a] mb-3">Kondisi Lapangan</h3>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-semibold text-[#15240a] mb-4">
                         <span className="flex items-center gap-1.5 rounded-lg bg-[#fff1f2] px-2.5 py-1.5 text-[#9f1239]">
-                          <Droplets size={12} /> Air: Macak-macak
+                          <Droplets size={12} /> Air: {data?.evidence.field_pulse?.water_presence || "Belum tersedia"}
                         </span>
                         <span className="text-[#deded4]">•</span>
                         <span className="flex items-center gap-1.5 rounded-lg bg-[#fffbeb] px-2.5 py-1.5 text-[#92400e]">
-                          Irigasi: Terbatas / Menurun
+                          Irigasi: {data?.evidence.field_pulse?.irrigation_flow || "Belum tersedia"}
                         </span>
                       </div>
                       <p className="text-[11px] sm:text-xs text-[#666a60] italic leading-relaxed pl-3 border-l-2 border-[#deded4]">
-                        "Air berkurang drastis sejak 2 hari lalu, pintu air hilir tampak tersumbat endapan lumpur dan kiriman air saluran sekunder kecil."
+                        "{data?.evidence.field_pulse?.notes || "Belum ada catatan lapangan."}"
                       </p>
                     </div>
 
@@ -294,10 +340,10 @@ export function ReviewDetailPage() {
                     <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm border border-[#deded4]/60">
                       <h3 className="text-xs sm:text-sm font-bold text-[#15240a] mb-3">Kebutuhan Tanaman</h3>
                       <div className="flex items-center gap-2 text-[10px] sm:text-xs font-semibold text-[#15240a] mb-3">
-                        <Sprout size={14} className="text-[#85c254]" /> Padi Inpari 32 <span className="text-[#deded4] mx-1">•</span> Fase Berbunga (58 HST)
+                        <Sprout size={14} className="text-[#85c254]" /> {cropLabel} <span className="text-[#deded4] mx-1">•</span> Fase {data?.crop?.growth_stage || "unknown"}
                       </div>
                       <p className="text-[11px] sm:text-xs text-[#44483f] leading-relaxed">
-                        <strong className="text-[#15240a]">Catatan Agronomi:</strong> Fase kritis ketersediaan air. Defisit genangan berisiko menyebabkan bulir hampa atau pengisian malai tidak optimal.
+                        <strong className="text-[#15240a]">Catatan Agronomi:</strong> {data?.assessment?.summary || "Assessment belum tersedia."}
                       </p>
                     </div>
 
@@ -321,14 +367,14 @@ export function ReviewDetailPage() {
                   </div>
                   
                   <p className="text-[11px] sm:text-xs text-[#92400e] leading-relaxed mb-5">
-                    Beberapa informasi menunjukkan kondisi yang perlu diperhatikan sebelum keputusan dibuat.
+                    {data?.assessment?.summary || "Assessment belum tersedia untuk kasus ini."}
                   </p>
 
                   <h3 className="text-[10px] font-bold tracking-widest text-[#a16207] uppercase mb-3">Kenapa?</h3>
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3 border border-[#fde68a]/40">
                       <span className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-[#15240a]">
-                        <Droplets size={12} className="text-[#a4a99d]" /> Kondisi air lapangan terbatas
+                        <Droplets size={12} className="text-[#a4a99d]" /> {data?.assessment?.factors[0] || "Kondisi lapangan perlu ditinjau"}
                       </span>
                       <span className="rounded bg-[#fef08a]/40 px-2 py-0.5 text-[9px] font-bold text-[#a16207]">Observasi Petani</span>
                     </div>
@@ -341,7 +387,7 @@ export function ReviewDetailPage() {
                     <div className="flex items-start gap-2 rounded-xl bg-[#fef08a]/20 p-3 border border-[#fde68a]/60">
                       <AlertTriangle size={14} className="text-[#ca8a04] shrink-0 mt-0.5" />
                       <p className="text-[10px] sm:text-[11px] text-[#92400e] leading-relaxed">
-                        <strong className="text-[#a16207]">Yang belum diketahui:</strong> Kondisi sumber air (informasi cuaca tidak menunjukkan kondisi debit air secara langsung).
+                        <strong className="text-[#a16207]">Yang belum diketahui:</strong> {data?.assessment?.missing_evidence.join("; ") || "Tidak ada kekurangan bukti yang dicatat."}
                       </p>
                     </div>
                   </div>
@@ -420,7 +466,7 @@ export function ReviewDetailPage() {
                       <Check size={12} className="text-white" /> 
                     </div>
                     <p className="text-[9px] sm:text-[10px] text-[#666a60] leading-relaxed">
-                      Pertimbangan Anda akan dibaca langsung oleh Pak Budi sebagai bahan rujukan sebelum mengambil keputusan akhir.
+                      Pertimbangan Anda akan dibaca langsung oleh {farmerName} sebagai bahan rujukan sebelum mengambil keputusan akhir.
                     </p>
                   </label>
 
@@ -432,10 +478,12 @@ export function ReviewDetailPage() {
                     >
                       Kirim Pertimbangan <ArrowRight size={16} />
                     </button>
-                    <button className="flex w-full sm:w-auto shrink-0 items-center justify-center rounded-xl bg-white border border-[#deded4] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#44483f] transition hover:bg-[#fafaf6] order-2 sm:order-none">
+                    <button onClick={() => sessionStorage.setItem(`rembuktani.review-draft.${reviewId}`, JSON.stringify({ selectedDecision, noteText }))} className="flex w-full sm:w-auto shrink-0 items-center justify-center rounded-xl bg-white border border-[#deded4] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#44483f] transition hover:bg-[#fafaf6] order-2 sm:order-none">
                       Simpan Draf
                     </button>
                   </div>
+
+                  {error && <p className="mt-4 text-[10px] sm:text-xs font-semibold text-[#9f1239]">{error}</p>}
 
                 </div>
 

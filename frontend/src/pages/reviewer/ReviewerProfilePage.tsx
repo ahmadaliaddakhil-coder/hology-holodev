@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LogoutButton } from "../../components/auth/LogoutButton";
+import { reviewerApi, type ApiReviewerDashboard, type ApiReviewerProfile } from "../../lib/reviewer-api";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -25,11 +26,20 @@ function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse
 export function ReviewerProfilePage() {  
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [profile, setProfile] = useState<ApiReviewerProfile | null>(null);
+  const [dashboard, setDashboard] = useState<ApiReviewerDashboard | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    Promise.all([reviewerApi.getProfile(), reviewerApi.getDashboard()])
+      .then(([profileResult, dashboardResult]) => { setProfile(profileResult); setDashboard(dashboardResult); })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : "Gagal memuat profil"));
     return () => clearTimeout(timer);
   }, []);
+
+  const displayName = profile?.display_name || "Reviewer";
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "RV";
 
   return (
     // MASTER WRAPPER
@@ -78,8 +88,8 @@ export function ReviewerProfilePage() {
                 <UserCircle2 size={15} />
               </div>
               <div>
-                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">Pak Slamet</p>
-                <p className="text-[10px] text-[#666a60]">Ketua Poktan</p>
+                <p className="max-w-[100px] truncate text-xs font-bold text-[#15240a]">{displayName}</p>
+                <p className="text-[10px] text-[#666a60]">Reviewer</p>
               </div>
             </div>
             <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
@@ -96,12 +106,12 @@ export function ReviewerProfilePage() {
               <Menu size={20} />
             </button>
             <span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">
-              Wilayah: Subak Jatiluwih
+              Wilayah: {dashboard?.region || "Belum ada wilayah"}
             </span>
           </div>
           <div className="flex items-center gap-3 sm:gap-5">
             <span className="hidden items-center gap-1.5 text-xs font-medium text-[#44483f] sm:flex">
-              <CloudSun size={16} /> Cerah Berawan 28°C
+              <CloudSun size={16} /> {dashboard?.weather ? `${dashboard.weather.condition} ${dashboard.weather.temp}°C` : "Cuaca belum tersedia"}
             </span>
             <Bell size={18} className="cursor-pointer text-[#44483f] transition hover:text-[#15240a]" />
             <div className="flex size-7 cursor-pointer items-center justify-center rounded-full bg-[#0d1b03] text-white">
@@ -131,7 +141,7 @@ export function ReviewerProfilePage() {
                 {/* Avatar with Badge */}
                 <div className="relative shrink-0">
                   <div className="flex size-20 sm:size-24 items-center justify-center rounded-[24px] bg-[#1c2a13] text-2xl sm:text-3xl font-display font-bold text-white shadow-inner">
-                    PS
+                    {initials}
                   </div>
                   <div className="absolute -bottom-2 -right-2 flex size-8 items-center justify-center rounded-full bg-white">
                     <div className="flex size-6 items-center justify-center rounded-full bg-[#85c254] text-[#15240a] shadow-sm">
@@ -143,14 +153,14 @@ export function ReviewerProfilePage() {
                 {/* Profile Details */}
                 <div>
                   <div className="flex flex-wrap items-center gap-3 mb-1.5">
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#15240a]">Pak Slamet</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#15240a]">{displayName}</h2>
                     <span className="inline-flex items-center rounded-md bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#3f6212]">
                       <div className="size-1.5 rounded-full bg-[#85c254] mr-1.5"></div> Penyuluh Terverifikasi
                     </span>
                   </div>
-                  <p className="text-sm font-semibold text-[#44483f] mb-1.5">Penyuluh Pertanian Lapangan (PPL)</p>
+                  <p className="text-sm font-semibold text-[#44483f] mb-1.5">Reviewer RembukTani</p>
                   <p className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#a4a99d]">
-                    <MapPin size={14} /> Kepanjen, Malang, Jawa Timur
+                    <MapPin size={14} /> {dashboard?.region || "Wilayah belum tersedia"}
                   </p>
                 </div>
               </div>
@@ -181,24 +191,24 @@ export function ReviewerProfilePage() {
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 border-b border-[#deded4]/30 pb-4">
                     <span className="text-xs sm:text-sm text-[#666a60]">Nama</span>
-                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">Pak Slamet</span>
+                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">{displayName}</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 border-b border-[#deded4]/30 pb-4">
                     <span className="text-xs sm:text-sm text-[#666a60]">Peran</span>
-                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">Penyuluh Pertanian</span>
+                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">{profile?.role === "reviewer" ? "Reviewer" : "-"}</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 border-b border-[#deded4]/30 pb-4">
                     <span className="text-xs sm:text-sm text-[#666a60]">Wilayah</span>
-                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">Kepanjen, Malang</span>
+                    <span className="text-sm sm:text-base font-bold text-[#15240a] text-right">{dashboard?.region || "Belum tersedia"}</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 pt-1">
                     <span className="text-xs sm:text-sm text-[#666a60] pt-1">Keahlian</span>
                     <div className="flex flex-wrap justify-end gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] px-3 py-1 text-[10px] sm:text-xs font-bold text-[#166534]">
-                        <div className="size-1.5 rounded-full bg-[#22c55e]"></div> Budidaya Padi
+                        <div className="size-1.5 rounded-full bg-[#22c55e]"></div> Reviewer Terverifikasi
                       </span>
                       <span className="inline-flex items-center rounded-full bg-[#f3f3ec] border border-[#deded4] px-3 py-1 text-[10px] sm:text-xs font-semibold text-[#44483f]">
-                        Manajemen Air
+                        {dashboard?.stats.pending_count ?? 0} review menunggu
                       </span>
                     </div>
                   </div>
@@ -233,6 +243,7 @@ export function ReviewerProfilePage() {
             </div>
 
             {/* Action Buttons Section */}
+            {error && <p className="mb-4 text-xs font-semibold text-[#9f1239]">{error}</p>}
             <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#deded4]/50 pt-8 transition-all delay-300 duration-700 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               
               <div className="flex w-full sm:w-auto items-center gap-3">

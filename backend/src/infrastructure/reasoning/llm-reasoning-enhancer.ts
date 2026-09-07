@@ -26,9 +26,11 @@ function validate(value: unknown): LlmOutput {
 }
 
 export class LlmReasoningEnhancer {
+  private retryAfter = 0;
   constructor(private readonly apiKey=config.llmApiKey, private readonly model=config.llmModel, private readonly enabled=config.llmEnabled) {}
   async enhance(input:ReasoningInput, baseline:ReasoningAssessment, crop:CropContext|null):Promise<EnhancedAssessment>{
     if(!this.enabled||!this.apiKey)return {...baseline,generation:{mode:'deterministic_fallback',fallbackReason:'LLM belum dikonfigurasi'}};
+    if(Date.now()<this.retryAfter)return {...baseline,generation:{mode:'deterministic_fallback',provider:'google-gemini',model:this.model,fallbackReason:'LLM cooldown setelah kegagalan sebelumnya'}};
     try{
       const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12_000);
       const safeInput={crop:crop?{crop_name:crop.crop_name,variety_name:crop.variety_name,growth_stage:crop.growth_stage,planting_date:crop.planting_date}:null,bmkg:input.bmkg?{source:'BMKG',delivery:input.bmkg.delivery,analysis_time:input.bmkg.evidence.temporal.analysis_time,forecast_slots:input.bmkg.evidence.payload.forecast_slots.slice(0,8)}:null,field_pulse:input.fieldPulse?{water_presence:input.fieldPulse.waterPresence,irrigation_flow:input.fieldPulse.irrigationFlow,observed_at:input.fieldPulse.observedAt}:null,guardrail:{context_state:baseline.contextState,confidence:baseline.confidence,missing_evidence:baseline.missingEvidence,limitations:baseline.limitations}};
@@ -36,6 +38,6 @@ export class LlmReasoningEnhancer {
       const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.model)}:generateContent`,{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':this.apiKey},signal:controller.signal,body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:1200,responseMimeType:'application/json',responseSchema:schema}})}).finally(()=>clearTimeout(timeout));
       if(!response.ok)throw new Error(`Gemini HTTP ${response.status}`);const body=await response.json() as {candidates?:Array<{content?:{parts?:Array<{text?:string}>}}>};const text=body.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error('Gemini returned no structured text');const generated=validate(JSON.parse(text));
       return {...baseline,generatedSummary:generated.summary,actionOptions:generated.options.map((option,index)=>({optionId:`LLM-${index+1}`, ...option})),rulesetVersion:`${baseline.rulesetVersion}+${this.model}`,generation:{mode:'llm_enhanced',provider:'google-gemini',model:this.model}};
-    }catch(error){return {...baseline,generation:{mode:'deterministic_fallback',provider:'google-gemini',model:this.model,fallbackReason:error instanceof Error?error.message:'LLM gagal'}};}
+    }catch(error){this.retryAfter=Date.now()+60_000;return {...baseline,generation:{mode:'deterministic_fallback',provider:'google-gemini',model:this.model,fallbackReason:error instanceof Error?error.message:'LLM gagal'}};}
   }
 }

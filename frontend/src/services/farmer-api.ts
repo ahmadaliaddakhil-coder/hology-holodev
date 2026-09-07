@@ -104,7 +104,7 @@ export type ApiProfile = {
 };
 
 export const farmerApi = {
-  getReasoningStatus: () => apiFetch<{ mode: "llm_enhanced" | "deterministic_fallback"; provider: string | null; model: string | null }>("/reasoning/status"),
+  getReasoningStatus: () => apiFetch<{ mode: "llm_enhanced" | "deterministic_fallback"; provider: string | null; model: string | null; instance_id: string }>("/reasoning/status"),
   getProfile: () => apiFetch<ApiProfile>("/profile"),
   listLands: () => apiFetch<ApiLand[]>("/lands"),
   getLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`),
@@ -118,7 +118,7 @@ export const farmerApi = {
   createDecisionCase: (payload: { land_id: string; crop_context_id: string; decision_type: string }) =>
     apiFetch<ApiDecisionCase>("/decision-cases", { method: "POST", body: JSON.stringify(payload) }),
   refreshBmkg: (caseId: string) => apiFetch<{ evidence: ApiEvidence; delivery: "live" | "cached" }>(`/decision-cases/${caseId}/bmkg/refresh`, { method: "POST" }),
-  createFieldPulse: (caseId: string, payload: { water_presence: string; irrigation_flow: string; reported_by?: string; observed_at?: string; is_mock?: boolean }) =>
+  createFieldPulse: (caseId: string, payload: { water_presence: string; irrigation_flow: string; reported_by?: string; observed_at?: string; notes?: string; is_mock?: boolean }) =>
     apiFetch<ApiEvidence>(`/decision-cases/${caseId}/field-pulse`, { method: "POST", body: JSON.stringify(payload) }),
   assess: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assess`, { method: "POST" }),
   getAssessment: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assessment`),

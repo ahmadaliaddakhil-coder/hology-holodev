@@ -30,6 +30,7 @@ import type {
   TrustedReviewStatus,
 } from '../domain/types.js';
 import { config } from '../config.js';
+import { randomUUID } from 'node:crypto';
 
 const decisionCaseStatuses = new Set<DecisionCaseStatus>([
   'draft',
@@ -58,6 +59,7 @@ const decisionTypes = new Set<DecisionType>(['selected_option', 'custom', 'defer
 const basisStrengths = new Set<BasisStrength>(['high', 'medium', 'low', 'insufficient']);
 const trustedReviewStatuses = new Set<TrustedReviewStatus>(['approve', 'modify', 'reject']);
 const isReviewerRole = (role: string | undefined): boolean => role === 'reviewer';
+const reasoningInstanceId = randomUUID();
 
 function bodyOf(request: Request): Record<string, unknown> {
   return request.body as Record<string, unknown>;
@@ -127,7 +129,7 @@ export function createApiRouter(
   };
 
   router.get('/reasoning/status', (_request, response) => {
-    response.json({ mode: config.llmEnabled ? 'llm_enhanced' : 'deterministic_fallback', provider: config.llmEnabled ? 'google-gemini' : null, model: config.llmEnabled ? config.llmModel : null });
+    response.json({ mode: config.llmEnabled ? 'llm_enhanced' : 'deterministic_fallback', provider: config.llmEnabled ? 'google-gemini' : null, model: config.llmEnabled ? config.llmModel : null, instance_id: reasoningInstanceId });
   });
 
   router.get('/profile', (request, response) => {
@@ -510,6 +512,7 @@ export function createApiRouter(
           water_presence: waterPresence,
           irrigation_flow: irrigationFlow,
           reported_by: body.reported_by,
+          notes: typeof body.notes === 'string' ? body.notes.trim().slice(0, 500) : undefined,
         },
         observed_at: typeof body.observed_at === 'string' ? body.observed_at : new Date().toISOString(),
         freshness_status: 'fresh',
@@ -537,8 +540,9 @@ export function createApiRouter(
       const decisionCaseId = requiredString(request.params.decisionCaseId, 'decisionCaseId');
       await ensureCaseAccess(request, decisionCaseId);
       const caseEvidence = await repositories.evidence.getByDecisionCaseId(decisionCaseId);
-      const bmkgEvidence = caseEvidence.find((item) => item.type === 'bmkg_forecast');
-      const fieldEvidence = caseEvidence.find((item) => item.type === 'field_pulse');
+      const newestFirst = [...caseEvidence].sort((a, b) => b.collected_at.localeCompare(a.collected_at));
+      const bmkgEvidence = newestFirst.find((item) => item.type === 'bmkg_forecast');
+      const fieldEvidence = newestFirst.find((item) => item.type === 'field_pulse');
       const fieldPayload = fieldEvidence?.payload ?? {};
       const fieldPulse: FieldPulseEvidence | undefined = fieldEvidence
         ? {

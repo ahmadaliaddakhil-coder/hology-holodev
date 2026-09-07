@@ -29,7 +29,10 @@ app.use(express.json({ limit: '100kb' }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    // A single evidence-to-decision flow legitimately performs many authenticated
+    // reads/writes. Keep the global abuse guard high enough that normal PWA use and
+    // QA do not lock the entire API; auth endpoints retain Supabase's own limits.
+    limit: 1000,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
   }),

@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import {
   ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu, 
   Plus, Settings, Sprout, UserCircle2, Warehouse, History, 
-  MapPin, CheckCircle2, AlertTriangle, Check
+  CheckCircle2, AlertTriangle, Check
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { farmerApi } from "../../services/farmer-api";
+import { readWorkflow } from "../../lib/decision-workflow";
 
 // Komponen Navigasi Sidebar
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -25,6 +28,10 @@ export function SelectReviewerPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedReviewer, setSelectedReviewer] = useState<"slamet" | "sari">("slamet");
+  const [requesting, setRequesting] = useState(false);
+  const [requestError, setRequestError] = useState("");
+  const nav = useNavigate();
+  const requestReview = async () => { const caseId = String(readWorkflow(landId || "").case_id || ""); if (!caseId) { setRequestError("Kasus keputusan belum tersedia."); return; } setRequesting(true); setRequestError(""); try { await farmerApi.requestReview(caseId); nav(`/farmer/lands/${landId}/final-decision`); } catch (error) { setRequestError(error instanceof Error ? error.message : "Permintaan review gagal"); } finally { setRequesting(false); } };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
@@ -268,7 +275,8 @@ export function SelectReviewerPage() {
                 <Link to={`/farmer/lands/${landId}/optional-review`} className="flex-1 sm:flex-none flex items-center justify-center text-xs sm:text-sm font-bold text-[#666a60] hover:text-[#15240a] px-2 py-3 transition-colors">
                   Kembali
                 </Link>
-                <button className="flex-1 sm:flex-none group flex items-center justify-center gap-2 rounded-xl bg-[#1c2a13] px-6 py-3 text-xs sm:text-sm font-bold text-white transition-all hover:bg-[#2d421b] shadow-md hover:shadow-lg">
+                {requestError && <span role="alert" className="text-xs text-[#9f2d2d]">{requestError}</span>}
+                <button disabled={requesting} onClick={requestReview} className="flex-1 sm:flex-none group flex items-center justify-center gap-2 rounded-xl bg-[#1c2a13] px-6 py-3 text-xs sm:text-sm font-bold text-white transition-all hover:bg-[#2d421b] shadow-md hover:shadow-lg disabled:opacity-50">
                   Kirim Permintaan Review 
                   <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
                 </button>

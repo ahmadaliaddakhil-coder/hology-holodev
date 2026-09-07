@@ -5,6 +5,7 @@ import {
   MapPin, HelpCircle, UserCog
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ensureAssessment, saveWorkflow } from "../../lib/decision-workflow";
 
 // Komponen Navigasi Sidebar (Konsisten dengan halaman sebelumnya)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -24,15 +25,17 @@ export function ActionAlternativesPage() {
   const { landId } = useParams();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [apiAlternatives, setApiAlternatives] = useState<Array<{id:string;tag:string;title:string;desc:string;reasons:string[]}>>([]);
   const nav = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    if (landId) ensureAssessment(landId).then((data) => setApiAlternatives(data.result.options.map((option, index) => ({ id: option.id, tag: `Opsi ${index + 1} · Ruleset`, title: option.title, desc: option.description || "Tanpa deskripsi tambahan", reasons: option.rationale ? [option.rationale] : ["Assessment aktif"] })))).catch(() => undefined);
     return () => clearTimeout(timer);
-  }, []);
+  }, [landId]);
 
   // Data Mockup untuk Kartu Opsi Tindakan (disesuaikan dengan gambar)
-  const alternatives = [
+  const fallbackAlternatives = [
     {
       id: "A",
       tag: "Opsi A • Respons Cepat",
@@ -55,8 +58,11 @@ export function ActionAlternativesPage() {
       reasons: ["Kondisi Air", "Perkiraan hujan", "Cuaca BMKG"]
     }
   ];
+  const alternatives = apiAlternatives.length ? apiAlternatives : fallbackAlternatives;
 
   const submit = () => {
+    const option = alternatives[0];
+    if (landId && option) saveWorkflow(landId, { option_id: apiAlternatives.length ? option.id : "", option_title: option.title, option_description: option.desc, option_rationale: option.reasons.join("; ") });
     nav(`/farmer/lands/${landId}/optional-review`)
   }
 

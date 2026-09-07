@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, Bell, Check, CheckCircle2, ChevronRight, CloudSun,
-  HelpCircle, Leaf, MapPin, Menu, Plus, Search, Settings,
-  Sprout, SunDim, UserCircle2, Warehouse, Waves, History, Circle, ArrowRight
+  ArrowLeft, Bell, Check, CloudSun, Leaf, Menu, Plus, Settings,
+  Sprout, UserCircle2, Warehouse, History, ArrowRight
 } from "lucide-react";
-import { farmerApi, type ApiCropContext, type ApiLand, type ApiProfile } from "../../services/farmer-api";
+import { farmerApi, type ApiCropContext, type ApiLand } from "../../services/farmer-api";
 import { motion } from "framer-motion";
 
 const options = [
@@ -36,7 +35,6 @@ export function IrrigationPulsePage() {
 
   const [land, setLand] = useState<ApiLand | null>(null);
   const [crop, setCrop] = useState<ApiCropContext | null>(null);
-  const [profile, setProfile] = useState<ApiProfile | null>(null);
 
   const [selected, setSelected] = useState<(typeof options)[number]["id"]>("unknown");
   const [note, setNote] = useState("");
@@ -46,13 +44,11 @@ export function IrrigationPulsePage() {
   useEffect(() => {
     Promise.all([
       farmerApi.getLand(landId),
-      farmerApi.getActiveCrop(landId),
-      farmerApi.getProfile()
+      farmerApi.getActiveCrop(landId)
     ])
-      .then(([l, c, p]) => {
+      .then(([l, c]) => {
         setLand(l);
         setCrop(c);
-        setProfile(p);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Data gagal dimuat"));
   }, [landId]);

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import {
-  ArrowLeft, Bell, Check, CheckCircle2, ChevronRight, CloudSun,
+  ArrowLeft, Bell, Check, CheckCircle2, CloudSun,
   HelpCircle, Leaf, MapPin, Menu, Plus, Search, Settings, 
-  Sprout, SunDim, UserCircle2, Warehouse, Waves, History, Circle
+  Sprout, SunDim, UserCircle2, Warehouse, Waves, History
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { saveWorkflow } from "../../lib/decision-workflow";
 
 
 // Komponen Navigasi Sidebar
@@ -57,6 +58,7 @@ export function ConditionWaterPage() {
   ];
 
   const submit = () => {
+    if (landId) saveWorkflow(landId, { water_trend: selectedOption });
     navigate(`/farmer/lands/${landId}/summary`);
   }
 

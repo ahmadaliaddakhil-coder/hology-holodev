@@ -4,14 +4,10 @@ import {
   ArrowLeft,
   ArrowRight,
   Bell,
-  Check,
-  Crosshair,
   Database,
   FileSearch,
   Leaf,
-  Map,
   Menu,
-  Search,
   Settings,
   Sprout,
   UserCircle2,
@@ -22,32 +18,6 @@ import {
 import { readLandDraft, updateLandDraft } from "../../lib/land-draft";
 
 type LocationMethod = "satellite" | "device" | "village";
-
-const methods: Array<{
-  id: LocationMethod;
-  title: string;
-  description: string;
-  icon: typeof Map;
-}> = [
-  {
-    id: "satellite",
-    title: "Pilih Titik di Peta Satelit Interaktif",
-    description: "Arahkan pin langsung ke galengan atau hamparan sawah Anda di peta desa.",
-    icon: Map,
-  },
-  {
-    id: "device",
-    title: "Gunakan Lokasi Ponsel / Perangkat Saat Ini",
-    description: "Sistem membaca sensor GPS saat Anda berada langsung di pematang sawah.",
-    icon: Crosshair,
-  },
-  {
-    id: "village",
-    title: "Cari Berdasarkan Nama Desa / Kelurahan",
-    description: "Ketik nama desa atau kecamatan untuk memilih wilayah hamparan.",
-    icon: Search,
-  },
-];
 
 function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -125,7 +95,7 @@ export function AddLandPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [name, setName] = useState(initialDraft.name || "");
   const [area, setArea] = useState(initialDraft.area || "");
-  const [method, setMethod] = useState<LocationMethod>(
+  const [method] = useState<LocationMethod>(
     (initialDraft.locationMethod as LocationMethod) || "satellite"
   );
   const [notice, setNotice] = useState("");

@@ -87,6 +87,7 @@ export type ApiAssessment = {
 
 export type ApiActionOption = { id: string; title: string; description?: string; rationale?: string; display_order: number };
 export type ApiAssessmentResult = { assessment: ApiAssessment; options: ApiActionOption[]; reasoning?: Record<string, unknown> };
+export type ApiTrustedReview = { id?: string; decision_case_id?: string; status: "pending" | "approve" | "reject"; comment?: string; created_at?: string };
 
 export type ApiProfile = {
   id: string;
@@ -119,6 +120,10 @@ export const farmerApi = {
     apiFetch<ApiEvidence>(`/decision-cases/${caseId}/field-pulse`, { method: "POST", body: JSON.stringify(payload) }),
   assess: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assess`, { method: "POST" }),
   getAssessment: (caseId: string) => apiFetch<ApiAssessmentResult>(`/decision-cases/${caseId}/assessment`),
+  requestReview: (caseId: string) => apiFetch<{ status: "review_pending" }>(`/decision-cases/${caseId}/reviews`, { method: "POST", body: JSON.stringify({}) }),
+  listReviews: (caseId: string) => apiFetch<ApiTrustedReview[]>(`/decision-cases/${caseId}/reviews`),
+  createDecision: (caseId: string, payload: { assessment_id: string; selected_action_option_id?: string; decision_type: "selected_option" | "custom" | "deferred"; decision_text: string; reason?: string; assessment_snapshot?: Record<string, unknown>; evidence_snapshot?: Record<string, unknown>; evidence_ids?: string[]; is_mock?: boolean }) => apiFetch<ApiDecisionRecord>(`/decision-cases/${caseId}/decision`, { method: "POST", body: JSON.stringify(payload) }),
+  createBrief: (recordId: string) => apiFetch<{ id: string; content: string }>(`/decision-records/${recordId}/brief`, { method: "POST" }),
   listDecisionRecords: () => apiFetch<ApiDecisionRecord[]>("/decision-records"),
   getDecisionRecord: (recordId: string) => apiFetch<ApiDecisionRecordContext>(`/decision-records/${recordId}`),
   listEvidence: (decisionCaseId: string) => apiFetch<ApiEvidence[]>(`/decision-cases/${decisionCaseId}/evidence`),

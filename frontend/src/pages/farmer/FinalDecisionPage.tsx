@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowLeft, ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu, 
+  ArrowLeft, ArrowRight, Bell, CloudSun, Leaf, Menu,
   Plus, Settings, Sprout, UserCircle2, Warehouse, History, 
   CheckCircle2, Pencil, AlertCircle, ShieldCheck, Droplets, 
   Waves, Check, ChevronDown, Info
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { farmerApi, type ApiAssessmentResult, type ApiEvidence, type ApiLand } from "../../services/farmer-api";
+import { ensureAssessment, readWorkflow } from "../../lib/decision-workflow";
 
 // Komponen Navigasi Sidebar
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -26,15 +28,23 @@ export function FinalDecisionPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [useSaran, setUseSaran] = useState<boolean | null>(null);
+  const [workflowData, setWorkflowData] = useState<{result:ApiAssessmentResult;evidence:ApiEvidence[];land:ApiLand;caseId:string}|null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    if (landId) ensureAssessment(landId).then((data) => setWorkflowData({ result: data.result, evidence: data.evidence, land: data.land, caseId: data.decisionCase.id })).catch((error: unknown) => setSubmitError(error instanceof Error ? error.message : "Data keputusan gagal dimuat"));
     return () => clearTimeout(timer);
-  }, []);
+  }, [landId]);
 
-  const submit = () => {
-    nav('/farmer/lands');
+  const submit = async () => {
+    if (!workflowData || !landId) { setSubmitError("Assessment belum siap."); return; }
+    const workflow = readWorkflow(landId); const optionId = String(workflow.option_id || "") || undefined;
+    const decisionText = useSaran === false ? "Keputusan ditunda untuk pemeriksaan lapangan lanjutan" : String(workflow.option_title || workflowData.result.options[0]?.title || "Keputusan lapangan ditetapkan oleh petani");
+    setSubmitting(true); setSubmitError("");
+    try { const record = await farmerApi.createDecision(workflowData.caseId, { assessment_id: workflowData.result.assessment.id, selected_action_option_id: optionId, decision_type: useSaran === false ? "deferred" : optionId ? "selected_option" : "custom", decision_text: decisionText, reason: String(workflow.option_rationale || "Ditetapkan setelah meninjau bukti dan keterbatasan."), assessment_snapshot: workflowData.result.assessment as unknown as Record<string, unknown>, evidence_snapshot: { count: workflowData.evidence.length }, evidence_ids: workflowData.evidence.map((item) => item.id), is_mock: workflowData.evidence.some((item) => item.is_mock) || /demo|uji/i.test(workflowData.land.name) }); await farmerApi.createBrief(record.id).catch(() => undefined); sessionStorage.removeItem(`rembuktani.workflow:${landId}`); nav(`/farmer/history/${record.id}`); } catch (error) { setSubmitError(error instanceof Error ? error.message : "Keputusan gagal dicatat"); } finally { setSubmitting(false); }
   }
 
   return (
@@ -349,8 +359,9 @@ export function FinalDecisionPage() {
             <Link to={`/farmer/lands/${landId}/optional-review`} className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-white border border-[#deded4] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#15240a] transition hover:bg-[#fafaf6]">
               <ArrowLeft size={16} /> Kembali / Ubah Alternatif
             </Link>
-            <button onClick={submit} className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#85c254] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#15240a] shadow-lg transition-all hover:bg-[#98cf6a] hover:shadow-xl">
-              <CheckCircle2 size={18} /> Sahkan & Simpan ke Buku Petak <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            {submitError && <p role="alert" className="text-xs font-semibold text-[#9f2d2d]">{submitError}</p>}
+            <button disabled={submitting || !workflowData} onClick={submit} className="group flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#85c254] px-6 py-3.5 text-xs sm:text-sm font-bold text-[#15240a] shadow-lg transition-all hover:bg-[#98cf6a] hover:shadow-xl disabled:opacity-50">
+              <CheckCircle2 size={18} /> {submitting ? "Menyimpan keputusan…" : "Sahkan & Simpan ke Buku Petak"} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   MapPin, CheckCircle2, AlertCircle, CloudRain, Droplets, Wind, Cloud, Info
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ensureAssessment } from "../../lib/decision-workflow";
 
 // Komponen Navigasi Sidebar
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -24,12 +25,14 @@ export function ConditionSummaryPage() {
   const { landId } = useParams();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [, setLoadError] = useState("");
   const nav = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 50);
+    if (landId) ensureAssessment(landId).catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "Data API gagal dimuat"));
     return () => clearTimeout(timer);
-  }, []);
+  }, [landId]);
 
   const submit = () => {
     nav(`/farmer/lands/${landId}/action-alternatives`);

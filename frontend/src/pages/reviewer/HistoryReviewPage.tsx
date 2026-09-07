@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
     Bell, CloudSun, Leaf, Menu,
-    Settings, Sprout, UserCircle2, Warehouse, History,
+    Settings, UserCircle2, Warehouse, History,
     ClipboardCheck, Check, X,
     Layers, ChevronDown, ChevronUp, ShieldCheck, CheckCircle2
 } from "lucide-react";

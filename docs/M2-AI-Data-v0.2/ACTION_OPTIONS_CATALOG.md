@@ -2,13 +2,17 @@
 
 Registry executable: `data/evidence/v0.2/ACTION_OPTIONS_v0.2.json`.
 
-| ID stabil | Title | Description | Rationale |
+| ID stabil | Title | Trigger | Allowed state |
 |---|---|---|---|
-| `OPT-VERIFY-FIELD` | Periksa kembali kondisi lahan | Ulangi pengamatan lokal yang relevan untuk kasus aktif. | Mengurangi informasi lokal yang belum diketahui atau perlu konfirmasi. |
-| `OPT-COLLECT-WATER-SOURCE` | Konfirmasi kondisi sumber air | Catat kondisi atau alokasi sumber air tanpa menetapkan volume/durasi. | Melengkapi konteks air yang belum tersedia. |
-| `OPT-REQUEST-REVIEW` | Minta pertimbangan pihak tepercaya | Bagikan evidence kepada reviewer/penyuluh untuk telaah manusia. | Menambah konteks ketika evidence terbatas atau berkonflik. |
-| `OPT-DEFER` | Tunda perubahan | Tunda perubahan tindakan sampai informasi cukup. | Menjaga abstention saat dasar keputusan belum memadai. |
+| `OPT-VERIFY-FIELD` | Periksa kembali kondisi lahan | Air terbatas/aliran tidak mengalir atau informasi penting belum lengkap | `context_available`, `needs_verification` |
+| `OPT-COLLECT-WATER-SOURCE` | Konfirmasi kondisi sumber air | Air terbatas/aliran tidak mengalir atau informasi penting belum lengkap | `context_available`, `needs_verification` |
+| `OPT-REQUEST-REVIEW` | Minta pertimbangan pihak tepercaya | Review manusia berguna | `context_available`, `needs_verification` |
+| `OPT-DEFER` | Tunda perubahan | Selalu tersedia pada basis lemah | `needs_verification`, `insufficient_evidence` |
 
 ID adalah semantic contract lintas AI/Data, backend, database, dan frontend; UUID
 database tetap hanya row identifier. Urutan display bukan ranking. Tidak ada best
 option, recommended score, prescription, durasi irigasi, atau klaim outcome.
+
+Engine memilih ID melalui rule mapping. LLM tidak boleh membuat, menghapus,
+mengganti, atau meranking action; LLM hanya boleh memperjelas ringkasan,
+description, dan rationale untuk ID yang sudah dipilih engine.

@@ -6,6 +6,8 @@ import { BigBoundaryClient } from '../infrastructure/location/big-boundary-clien
 import { BmkgAdm4Verifier } from '../infrastructure/location/bmkg-adm4-verifier.js';
 
 import { WaterReasoningEngine } from '../infrastructure/reasoning/water-reasoning-engine.js';
+import { LlmReasoningEnhancer } from '../infrastructure/reasoning/llm-reasoning-enhancer.js';
+import { ACTION_CATALOG } from '../infrastructure/reasoning/action-catalog.js';
 import { formatDecisionBrief } from '../infrastructure/sharing/decision-brief-formatter.js';
 import type { BmkgCanonicalEvidence } from '../infrastructure/bmkg/bmkg.types.js';
 import type { FieldPulseEvidence } from '../infrastructure/reasoning/reasoning.types.js';
@@ -28,6 +30,8 @@ import type {
   GrowthStage,
   TrustedReviewStatus,
 } from '../domain/types.js';
+import { config } from '../config.js';
+import { randomUUID } from 'node:crypto';
 
 const decisionCaseStatuses = new Set<DecisionCaseStatus>([
   'draft',
@@ -56,6 +60,7 @@ const decisionTypes = new Set<DecisionType>(['selected_option', 'custom', 'defer
 const basisStrengths = new Set<BasisStrength>(['high', 'medium', 'low', 'insufficient']);
 const trustedReviewStatuses = new Set<TrustedReviewStatus>(['approve', 'modify', 'reject']);
 const isReviewerRole = (role: string | undefined): boolean => role === 'reviewer';
+const reasoningInstanceId = randomUUID();
 
 function bodyOf(request: Request): Record<string, unknown> {
   return request.body as Record<string, unknown>;
@@ -96,6 +101,7 @@ function sendError(response: Response, error: unknown): void {
 type ApiDependencies = {
   bmkgAdapter?: BmkgAdapter;
   reasoningEngine?: WaterReasoningEngine;
+  llmEnhancer?: LlmReasoningEnhancer;
   boundaryClient?: BigBoundaryClient;
   adm4Verifier?: BmkgAdm4Verifier;
 };
@@ -107,8 +113,13 @@ export function createApiRouter(
   const router = Router();
   const bmkgAdapter = dependencies.bmkgAdapter ?? new BmkgAdapter();
   const reasoningEngine = dependencies.reasoningEngine ?? new WaterReasoningEngine();
+  const llmEnhancer = dependencies.llmEnhancer ?? new LlmReasoningEnhancer();
   const boundaryClient = dependencies.boundaryClient ?? new BigBoundaryClient();
   const adm4Verifier = dependencies.adm4Verifier ?? new BmkgAdm4Verifier();
+  const withCatalogIds = <T extends { title: string }>(options: T[]) => options.map((option) => ({
+    ...option,
+    catalog_option_id: ACTION_CATALOG.find((catalogItem) => catalogItem.title === option.title)?.optionId ?? null,
+  }));
 
 
   const ensureLandAccess = async (request: Request, landId: string): Promise<void> => {
@@ -122,6 +133,10 @@ export function createApiRouter(
     if (!decisionCase) throw new Error('Decision case not found');
     await ensureLandAccess(request, decisionCase.land_id);
   };
+
+  router.get('/reasoning/status', (_request, response) => {
+    response.json({ mode: config.llmEnabled ? 'llm_enhanced' : 'deterministic_fallback', provider: config.llmEnabled ? 'google-gemini' : null, model: config.llmEnabled ? config.llmModel : null, instance_id: reasoningInstanceId });
+  });
 
   router.get('/profile', (request, response) => {
     const profile = request.auth!.profile;
@@ -594,6 +609,7 @@ export function createApiRouter(
           water_presence: waterPresence,
           irrigation_flow: irrigationFlow,
           reported_by: body.reported_by,
+          notes: typeof body.notes === 'string' ? body.notes.trim().slice(0, 500) : undefined,
         },
         observed_at: typeof body.observed_at === 'string' ? body.observed_at : new Date().toISOString(),
         freshness_status: 'fresh',
@@ -621,8 +637,9 @@ export function createApiRouter(
       const decisionCaseId = requiredString(request.params.decisionCaseId, 'decisionCaseId');
       await ensureCaseAccess(request, decisionCaseId);
       const caseEvidence = await repositories.evidence.getByDecisionCaseId(decisionCaseId);
-      const bmkgEvidence = caseEvidence.find((item) => item.type === 'bmkg_forecast');
-      const fieldEvidence = caseEvidence.find((item) => item.type === 'field_pulse');
+      const newestFirst = [...caseEvidence].sort((a, b) => b.collected_at.localeCompare(a.collected_at));
+      const bmkgEvidence = newestFirst.find((item) => item.type === 'bmkg_forecast');
+      const fieldEvidence = newestFirst.find((item) => item.type === 'field_pulse');
       const fieldPayload = fieldEvidence?.payload ?? {};
       const fieldPulse: FieldPulseEvidence | undefined = fieldEvidence
         ? {
@@ -639,17 +656,28 @@ export function createApiRouter(
             delivery: bmkgEvidence.freshness_status === 'stale' ? 'cached' as const : 'live' as const,
           }
         : undefined;
-      const result = reasoningEngine.evaluate({
+      const decisionCase = await repositories.decisionCases.getById(decisionCaseId);
+      const crop = decisionCase ? await repositories.cropContexts.getById(decisionCase.crop_context_id) : null;
+      const reasoningInput = {
         decisionCaseId,
         evaluatedAt: new Date().toISOString(),
         bmkg,
         fieldPulse,
-      });
+        cropContext: crop ? {
+          cropContextId: crop.id,
+          cropName: crop.crop_name,
+          varietyName: crop.variety_name,
+          growthStage: crop.growth_stage,
+          plantingDate: crop.planting_date,
+        } : undefined,
+      };
+      const baseline = reasoningEngine.evaluate(reasoningInput);
+      const result = await llmEnhancer.enhance(reasoningInput, baseline, crop);
       const createdAssessment = await repositories.assessments.createAssessment({
         decision_case_id: decisionCaseId,
         version: await repositories.assessments.getNextVersion(decisionCaseId),
         status: 'active',
-        summary: result.contextState,
+        summary: result.generatedSummary ?? result.summary,
         basis_strength: result.confidence,
         factors: result.factors,
         missing_evidence: result.missingEvidence,
@@ -668,7 +696,7 @@ export function createApiRouter(
         })),
       );
       await repositories.decisionCases.updateStatus(decisionCaseId, 'assessed');
-      response.status(201).json({ assessment, options, reasoning: result });
+      response.status(201).json({ assessment, options: withCatalogIds(options), reasoning: result });
     } catch (error) {
       sendError(response, error);
     }
@@ -684,7 +712,7 @@ export function createApiRouter(
         return;
       }
       const options = await repositories.actionOptions.getByAssessmentId(assessment.id);
-      response.json({ assessment, options });
+      response.json({ assessment, options: withCatalogIds(options) });
     } catch (error) {
       sendError(response, error);
     }
@@ -713,7 +741,7 @@ export function createApiRouter(
 
   router.get('/assessments/:assessmentId/options', async (request, response) => {
     try {
-      response.json(await repositories.actionOptions.getByAssessmentId(requiredString(request.params.assessmentId, 'assessmentId')));
+      response.json(withCatalogIds(await repositories.actionOptions.getByAssessmentId(requiredString(request.params.assessmentId, 'assessmentId'))));
     } catch (error) {
       sendError(response, error);
     }

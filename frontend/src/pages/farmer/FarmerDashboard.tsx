@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Bell, ChevronRight, CloudSun, FileCheck2, History, Leaf, Menu, Plus, RefreshCw, Settings, Sprout, UserCircle2, Warehouse, X } from "lucide-react";
+import { Bell, ChevronRight, CloudSun, FileCheck2, History, Leaf, Menu, Plus, RefreshCw, Sprout, UserCircle2, Warehouse, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getUser } from "../../lib/auth";
 import { farmerApi, type ApiCropContext, type ApiDecisionCase, type ApiDecisionRecord, type ApiEvidence, type ApiLand } from "../../services/farmer-api";
 import { WeatherStatus } from "../../components/farmer/WeatherStatus";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 const heroImage = "https://www.figma.com/api/mcp/asset/3b17483f-6278-487e-b29e-3726fe9fcd12.png";
 const fieldImages = ["https://www.figma.com/api/mcp/asset/864611c8-3b58-4444-8606-6186e6a5b233.png", "https://www.figma.com/api/mcp/asset/9b5fa1e3-c8f4-47b4-9d19-270f04e08bb6.png"];
@@ -67,7 +68,6 @@ export function FarmerDashboard() {
   const visibleLands = data.lands.filter((land) => activeFilter === "all" || (activeFilter === "attention" ? !data.crops[land.id] || pendingByLand.has(land.id) : data.crops[land.id]?.growth_stage === activeFilter));
   const primaryLand = data.lands[0];
   const primaryEvidence = primaryLand ? latestEvidenceByLand[primaryLand.id] : undefined;
-  const primaryForecast = forecastFrom(primaryEvidence);
   const primaryRegion = primaryLand ? [primaryLand.village || primaryLand.district, primaryLand.regency].filter(Boolean).join(", ") : "Belum ada wilayah";
   const latestDecision = data.decisions[0];
   const latestCase = latestDecision ? data.cases.find((item) => item.id === latestDecision.decision_case_id) : undefined;
@@ -80,7 +80,7 @@ export function FarmerDashboard() {
         <nav className="space-y-1"><Link to="/farmer/dashboard"><NavItem icon={Warehouse} label="Beranda" active /></Link><Link to="/farmer/lands"><NavItem icon={Sprout} label="Lahan" /></Link><Link to="/farmer/history"><NavItem icon={History} label="Riwayat" /></Link><Link to="/farmer/profile"><NavItem icon={UserCircle2} label="Profil" /></Link></nav>
       </div>
       <div className="space-y-4 px-1"><div className="rounded-xl bg-[#e9fcb5] p-3"><p className="mb-2 text-xs font-bold">Cuaca lahan terdekat</p><WeatherStatus preferredLandId={primaryLand?.id} /></div>
-        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div><div><p className="max-w-36 truncate text-xs font-bold">{displayName}</p><p className="text-xs text-[#44483f]">{user?.role === "reviewer" ? "Reviewer" : "Petani"}</p></div></div><Settings size={18} /></div></div>
+        <div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></div><div><p className="max-w-36 truncate text-xs font-bold">{displayName}</p><p className="text-xs text-[#44483f]">{user?.role === "reviewer" ? "Reviewer" : "Petani"}</p></div></div><LogoutButton compact /></div></div>
     </aside>
     <div className="md:pl-[260px]">
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#deded4]/60 bg-[#fafaf6]/90 px-4 shadow-sm backdrop-blur-xl sm:px-8"><button className="md:hidden" onClick={() => setMobileNavOpen(true)} aria-label="Buka menu"><Menu size={22} /></button><span className="max-w-[55%] truncate rounded bg-[#e4f6b0] px-2 py-1 text-xs font-semibold">Wilayah: {primaryRegion}</span><div className="flex items-center gap-3"><span className="hidden sm:flex"><WeatherStatus preferredLandId={primaryLand?.id} /></span><Bell size={17} /><UserCircle2 size={20} /></div></header>

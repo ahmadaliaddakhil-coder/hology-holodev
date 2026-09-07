@@ -3,9 +3,10 @@ import {
   Bell, CloudSun, Leaf, Menu, 
   Settings, UserCircle2, Warehouse, History,
   ClipboardCheck, X, MapPin, ShieldCheck, User, 
-  FileText, HelpCircle, LogOut, Edit2, Check, Lock
+  FileText, HelpCircle, Edit2, Check, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -243,9 +244,7 @@ export function ReviewerProfilePage() {
                 </button>
               </div>
 
-              <button className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs sm:text-sm font-bold text-[#ef4444] hover:bg-[#fff1f2] transition-colors">
-                <LogOut size={16} /> Keluar
-              </button>
+              <div className="w-full sm:w-auto"><LogoutButton/></div>
 
             </div>
 

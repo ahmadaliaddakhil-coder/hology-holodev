@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
     ArrowRight, Bell, ChevronRight, CloudSun, Leaf, Menu,
-    Settings, Sprout, UserCircle2, Warehouse, History,
+    Settings, UserCircle2, Warehouse, History,
     CheckCircle2, ClipboardCheck, ChevronDown, AlertTriangle,
-    Clock, CloudRain, Check, X
+    X
 } from "lucide-react";
 import { getUser } from "../../lib/auth";
 import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";

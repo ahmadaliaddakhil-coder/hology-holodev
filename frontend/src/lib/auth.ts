@@ -44,7 +44,14 @@ export function saveAuth(session: Session, user: AuthUser, remember: boolean) {
 }
 
 export function clearAuth() {
-  for (const store of stores()) { store.removeItem(SESSION_KEY); store.removeItem(USER_KEY); }
+  for (const store of stores()) {
+    for (let index = store.length - 1; index >= 0; index -= 1) {
+      const key = store.key(index);
+      if (key && (key === SESSION_KEY || key === USER_KEY || key.startsWith("rembuktani.") || key.startsWith("field-pulse:"))) {
+        store.removeItem(key);
+      }
+    }
+  }
   window.dispatchEvent(new Event("rembuktani:auth"));
 }
 
@@ -68,6 +75,21 @@ export const authApi = {
   register: (payload: { displayName: string; identity: string; password: string; role: string }) => json<{ user: AuthUser; session: Session | null; requiresVerification: boolean }>("/auth/register", { method: "POST", body: JSON.stringify(payload) }),
   forgotPassword: (email: string) => json<{ message: string }>("/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
   resetPassword: (accessToken: string, password: string) => json<{ message: string }>("/auth/reset-password", { method: "POST", body: JSON.stringify({ accessToken, password }) }),
+  logout: async (): Promise<{ serverRevoked: boolean }> => {
+    const session = getSession();
+    let serverRevoked = !session;
+    try {
+      if (session) {
+        await json<void>("/auth/logout", { method: "POST", headers: { Authorization: `Bearer ${session.accessToken}` } });
+        serverRevoked = true;
+      }
+    } catch {
+      // Local logout must still complete when the network or auth provider is unavailable.
+    } finally {
+      clearAuth();
+    }
+    return { serverRevoked };
+  },
 };
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

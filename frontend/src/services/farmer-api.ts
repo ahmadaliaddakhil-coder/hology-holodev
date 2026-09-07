@@ -108,6 +108,7 @@ export const farmerApi = {
   listLands: () => apiFetch<ApiLand[]>("/lands"),
   getLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`),
   createLand: (payload: CreateLandPayload) => apiFetch<ApiLand>("/lands", { method: "POST", body: JSON.stringify(payload) }),
+  resolveLocation: (payload: { lat: number; lon: number; adm4: string }) => apiFetch<{ adm4Verification: { adm4: string; location: Record<string, unknown>; forecastSlotCount: number }; mappingVerified: boolean; mappingNote: string }>("/locations/resolve", { method: "POST", body: JSON.stringify(payload) }),
   archiveLand: (landId: string) => apiFetch<ApiLand>(`/lands/${landId}`, { method: "DELETE" }),
   getActiveCrop: (landId: string) => apiFetch<ApiCropContext>(`/lands/${landId}/crop-context`),
   createCrop: (landId: string, payload: { crop_name: string; variety_name?: string; growth_stage: ApiCropContext["growth_stage"]; planting_date?: string }) =>

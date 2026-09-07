@@ -8,6 +8,8 @@ export type LandDraft = {
   regency?: string;
   district?: string;
   village?: string;
+  adm4Code?: string;
+  locationSource?: string;
 };
 
 const KEY = "rembuktani.land-draft.v1";

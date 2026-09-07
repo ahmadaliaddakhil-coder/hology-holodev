@@ -5,16 +5,28 @@ import { createAnonClient } from '../infrastructure/persistence/supabase.js';
 
 type AccountRole = 'farmer' | 'reviewer';
 
-const normalizeIdentity = (value: unknown): { email?: string; phone?: string } => {
+export const normalizeIdentity = (value: unknown): { email?: string; phone?: string } => {
   const identity = typeof value === 'string' ? value.trim() : '';
   if (!identity) throw new Error('Nomor WhatsApp atau email wajib diisi');
-  if (identity.includes('@')) return { email: identity.toLowerCase() };
+  if (identity.includes('@')) {
+    const email = identity.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Email tidak valid');
+    return { email };
+  }
 
+  if (!/^\+?[\d\s().-]+$/.test(identity)) throw new Error('Nomor WhatsApp tidak valid');
   const digits = identity.replace(/\D/g, '');
-  if (digits.length < 9 || digits.length > 15) throw new Error('Nomor WhatsApp tidak valid');
-  if (digits.startsWith('62')) return { phone: `+${digits}` };
-  if (digits.startsWith('0')) return { phone: `+62${digits.slice(1)}` };
-  return { phone: `+${digits}` };
+  const phone = identity.startsWith('+')
+    ? `+${digits}`
+    : digits.startsWith('62')
+      ? `+${digits}`
+      : digits.startsWith('0')
+        ? `+62${digits.slice(1)}`
+        : digits.startsWith('8')
+          ? `+62${digits}`
+          : `+${digits}`;
+  if (!/^\+[1-9]\d{8,14}$/.test(phone)) throw new Error('Nomor WhatsApp tidak valid');
+  return { phone };
 };
 
 const publicSession = (session: { access_token: string; refresh_token: string; expires_at?: number; expires_in: number; token_type: string }) => ({
@@ -36,6 +48,11 @@ const isEmailRateLimitError = (error: unknown): boolean => {
   return candidate.status === 429 && candidate.code === 'over_email_send_rate_limit';
 };
 const emailRateLimitMessage = 'Batas pengiriman email tercapai. Tunggu hingga satu jam, lalu coba lagi.';
+const isPhoneProviderError = (error: unknown): boolean => {
+  const message = messageFor(error).toLowerCase();
+  return message.includes('phone provider') || message.includes('sms provider') || message.includes('unsupported phone') || message.includes('phone signup') || message.includes('phone signups');
+};
+const phoneProviderMessage = 'Pendaftaran nomor belum aktif pada Supabase. Aktifkan Phone Auth dan hubungkan Twilio WhatsApp terlebih dahulu.';
 
 export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
   const router = Router();
@@ -70,6 +87,7 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
       if (error) {
         if (isNetworkAuthError(error)) return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
         if (isEmailRateLimitError(error)) return void response.status(429).json({ error: emailRateLimitMessage });
+        if (isPhoneProviderError(error)) return void response.status(503).json({ error: phoneProviderMessage });
         return void response.status(400).json({ error: error.message });
       }
       if (!data.user || data.user.identities?.length === 0) return void response.status(409).json({ error: 'Akun sudah terdaftar' });
@@ -88,6 +106,8 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
         user: { id: data.user.id, displayName, role },
         session: data.session ? publicSession(data.session) : null,
         requiresVerification: !data.session,
+        verificationChannel: identity.phone ? 'whatsapp' : 'email',
+        verificationTarget: identity.phone ?? identity.email,
       });
     } catch (error) {
       response.status(400).json({ error: messageFor(error) });
@@ -118,6 +138,44 @@ export const createAuthRouter = (serviceClient: SupabaseClient): Router => {
     const { data, error } = await createAnonClient().auth.refreshSession({ refresh_token: refreshToken });
     if (error || !data.session) return void response.status(isNetworkAuthError(error) ? 503 : 401).json({ error: isNetworkAuthError(error) ? 'Layanan autentikasi sedang tidak dapat dijangkau' : 'Sesi tidak dapat diperbarui' });
     response.json({ session: publicSession(data.session) });
+  });
+
+  router.post('/verify-phone', async (request, response) => {
+    try {
+      const identity = normalizeIdentity(request.body?.phone);
+      if (!identity.phone) return void response.status(400).json({ error: 'Nomor WhatsApp tidak valid' });
+      const token = typeof request.body?.token === 'string' ? request.body.token.replace(/\D/g, '') : '';
+      if (!/^\d{6}$/.test(token)) return void response.status(400).json({ error: 'Kode verifikasi harus terdiri dari 6 angka' });
+      const { data, error } = await createAnonClient().auth.verifyOtp({ phone: identity.phone, token, type: 'sms' });
+      if (error || !data.session || !data.user) {
+        if (isNetworkAuthError(error)) return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+        return void response.status(400).json({ error: 'Kode verifikasi salah atau sudah kedaluwarsa' });
+      }
+      const { data: profile } = await serviceClient.from('profiles').select('*').eq('user_id', data.user.id).single();
+      if (!profile) return void response.status(403).json({ error: 'Akun belum memiliki profil RembukTani' });
+      response.json({ user: profile, session: publicSession(data.session) });
+    } catch (error) {
+      response.status(400).json({ error: messageFor(error) });
+    }
+  });
+
+  router.post('/resend-phone-verification', async (request, response) => {
+    try {
+      const identity = normalizeIdentity(request.body?.phone);
+      if (!identity.phone) return void response.status(400).json({ error: 'Nomor WhatsApp tidak valid' });
+      const { error } = await createAnonClient().auth.signInWithOtp({
+        phone: identity.phone,
+        options: { channel: 'whatsapp', shouldCreateUser: false },
+      });
+      if (error) {
+        if (isNetworkAuthError(error)) return void response.status(503).json({ error: 'Layanan autentikasi sedang tidak dapat dijangkau' });
+        if (isPhoneProviderError(error)) return void response.status(503).json({ error: phoneProviderMessage });
+        return void response.status(error.status === 429 ? 429 : 400).json({ error: error.status === 429 ? 'Terlalu banyak permintaan kode. Tunggu sebentar lalu coba lagi.' : error.message });
+      }
+      response.json({ message: 'Kode verifikasi baru telah dikirim melalui WhatsApp.' });
+    } catch (error) {
+      response.status(400).json({ error: messageFor(error) });
+    }
   });
 
   router.post('/logout', async (request, response) => {

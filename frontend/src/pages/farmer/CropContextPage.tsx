@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Bell, Check, ChevronLeft, ChevronRight, History, Leaf, Menu, Minus, Plus, Sprout, Sun, UserCircle2, Warehouse, Waves, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { clearLandDraft, readLandDraft } from "../../lib/land-draft";
 import { farmerApi, type ApiCropContext } from "../../services/farmer-api";
 import { getUser } from "../../lib/auth";
@@ -16,6 +16,7 @@ const phases: { id: ApiCropContext["growth_stage"]; title: string; description: 
 ];
 
 export function CropContextPage() {
+  const navigate = useNavigate();
   const draft = readLandDraft();
   const user = getUser();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -56,7 +57,7 @@ export function CropContextPage() {
       landId = land.id;
       await farmerApi.createCrop(land.id, { crop_name: cropName, variety_name: variety, growth_stage: phase, planting_date: plantedAt.toISOString().slice(0, 10) });
       clearLandDraft();
-      window.location.href = `/farmer/lands/${land.id}`;
+      navigate(`/farmer/lands/${land.id}`, { replace: true });
     } catch (cause) {
       if (landId) await farmerApi.archiveLand(landId).catch(() => undefined);
       setError(cause instanceof Error ? cause.message : "Lahan gagal disimpan");

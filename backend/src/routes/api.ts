@@ -69,10 +69,11 @@ function requiredString(value: unknown, field: string): string {
 }
 
 function requiredNumber(value: unknown, field: string): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
+  const numberValue = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN;
+  if (!Number.isFinite(numberValue)) {
     throw new Error(`${field} must be a finite number`);
   }
-  return value;
+  return numberValue;
 }
 
 function enumValue<T>(value: unknown, field: string, allowed: Set<T>): T {
@@ -134,10 +135,96 @@ export function createApiRouter(
     });
   });
 
+  router.get('/reviewer/dashboard', async (request, response) => {
+    try {
+      if (!isReviewerRole(request.auth?.profile.role)) {
+        const error = new Error('Only reviewer role can access reviewer dashboard');
+        error.name = 'ForbiddenError';
+        throw error;
+      }
+
+      const reviewerId = currentProfileId(request);
+      const pendingCases = await repositories.decisionCases.getAll({ status: 'review_pending' });
+      const pendingContexts = await Promise.all(pendingCases.map((item) => repositories.decisionCases.getWithContext(item.id)));
+      const completedReviews = await repositories.trustedReviews.getByReviewer(reviewerId);
+      const completedContexts = await Promise.all(completedReviews.map((item) => repositories.decisionCases.getWithContext(item.decision_case_id)));
+
+      const forecast = (context: any) => {
+        const evidence = context?.evidence?.find((item: any) => item.type === 'bmkg_forecast');
+        const slots = evidence?.payload?.forecast_slots ?? evidence?.payload?.payload?.forecast_slots;
+        const slot = Array.isArray(slots) ? slots.find((value: any) => new Date(value.target_time_utc ?? value.target_time_local ?? 0).getTime() >= Date.now()) ?? slots[0] : undefined;
+        return slot ? { condition: slot.weather_desc ?? 'Prakiraan tersedia', temp: typeof slot.t === 'number' ? slot.t : 0, text: evidence.source ?? 'BMKG' } : null;
+      };
+      const fieldPulse = (context: any) => {
+        const evidence = context?.evidence?.find((item: any) => item.type === 'field_pulse');
+        if (!evidence) return null;
+        const payload = evidence.payload ?? {};
+        return { condition: String(payload.water_presence ?? 'unknown'), text: String(payload.irrigation_flow ?? 'unknown') };
+      };
+      const locationOf = (land: any) => [land?.village, land?.district, land?.regency].filter(Boolean).join(', ') || 'Lokasi belum tersedia';
+      const pending = pendingContexts.filter(Boolean).map((context: any) => ({
+        review_id: context.id,
+        case_id: context.id,
+        land_name: context.land?.name ?? 'Lahan',
+        farmer_name: context.created_by_profile?.display_name ?? 'Petani',
+        location: locationOf(context.land),
+        crop_name: context.crop_context?.crop_name ?? 'Tanaman belum dicatat',
+        growth_stage: context.crop_context?.growth_stage ?? 'unknown',
+        decision_type: context.decision_type,
+        submitted_at: context.updated_at ?? context.created_at,
+        evidence: { bmkg: forecast(context), field_pulse: fieldPulse(context) },
+      }));
+      const completed = completedReviews.map((review, index) => {
+        const context: any = completedContexts[index];
+        return {
+          review_id: review.id,
+          land_name: context?.land?.name ?? 'Lahan',
+          farmer_name: context?.created_by_profile?.display_name ?? 'Petani',
+          village: context?.land?.village ?? 'Lokasi belum tersedia',
+          status: review.status,
+          comment: review.comment ?? '',
+          responded_at: review.responded_at ?? review.created_at,
+        };
+      });
+
+      response.json({
+        stats: { pending_count: pending.length, urgent_count: pending.filter((item) => item.evidence.field_pulse?.condition === 'none').length },
+        reviewer_name: request.auth?.profile.display_name ?? 'Reviewer',
+        region: pending[0]?.location ?? 'Belum ada wilayah',
+        weather: pending[0]?.evidence.bmkg ?? null,
+        pending_reviews: pending,
+        completed_reviews: completed,
+      });
+    } catch (error) {
+      sendError(response, error);
+    }
+  });
+
   router.get('/lands', async (request, response) => {
     try {
       const ownerId = currentProfileId(request);
       response.json(await repositories.lands.getByOwnerId(ownerId));
+    } catch (error) {
+      sendError(response, error);
+    }
+  });
+
+  router.get('/lands/:landId/bmkg', async (request, response) => {
+    try {
+      const landId = requiredString(request.params.landId, 'landId');
+      await ensureLandAccess(request, landId);
+      const land = await repositories.lands.getById(landId);
+      if (!land) {
+        response.status(404).json({ error: 'Land not found' });
+        return;
+      }
+      if (!land.adm4_code) {
+        response.json({ weather: null });
+        return;
+      }
+
+      const result = await bmkgAdapter.getEvidence(land.adm4_code, land.id, `weather:${land.id}`);
+      response.json({ weather: result.evidence, delivery: result.delivery, fetched_at: result.fetchedAt });
     } catch (error) {
       sendError(response, error);
     }
@@ -151,6 +238,7 @@ export function createApiRouter(
         name: requiredString(body.name, 'name'),
         latitude: requiredNumber(body.latitude, 'latitude'),
         longitude: requiredNumber(body.longitude, 'longitude'),
+        boundary_polygon: Array.isArray(body.boundary_polygon) ? body.boundary_polygon as [number, number][] : undefined,
         description: typeof body.description === 'string' ? body.description : undefined,
         province: typeof body.province === 'string' ? body.province : undefined,
         regency: typeof body.regency === 'string' ? body.regency : undefined,
@@ -434,14 +522,18 @@ export function createApiRouter(
       const body = bodyOf(request);
       const lat = requiredNumber(body.lat, 'lat');
       const lon = requiredNumber(body.lon, 'lon');
-      const adm4 = requiredString(body.adm4, 'adm4');
       const boundaryCandidate = await boundaryClient.findContainingPoint({ lat, lon });
-      const adm4Verification = await adm4Verifier.verify(adm4);
+      const requestedAdm4 = typeof body.adm4 === 'string' && body.adm4.trim() ? body.adm4.trim() : undefined;
+      const candidateAdm4 = boundaryCandidate.adm4Candidate;
+      const adm4 = requestedAdm4 ?? (candidateAdm4 && /^\d{2}\.\d{2}\.\d{2}\.\d{4}$/.test(candidateAdm4) ? candidateAdm4 : undefined);
+      const adm4Verification = adm4 ? await adm4Verifier.verify(adm4) : null;
       response.json({
         boundaryCandidate,
         adm4Verification,
-        mappingVerified: false,
-        mappingNote: 'BIG boundary and BMKG adm4 are retained separately until a verified crosswalk exists.',
+        mappingVerified: Boolean(adm4Verification),
+        mappingNote: adm4Verification
+          ? 'ADM4 kandidat dari boundary diverifikasi ulang ke BMKG.'
+          : 'Nama wilayah berasal dari boundary BIG; ADM4 BMKG belum tersedia untuk titik ini.',
       });
     } catch (error) {
       sendError(response, error);

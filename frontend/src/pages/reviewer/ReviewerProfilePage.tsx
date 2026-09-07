@@ -90,8 +90,7 @@ export function ReviewerProfilePage() {
         <div className="flex-1 flex flex-col min-w-0 md:ml-[260px]">        
         
         {/* TOPBAR STANDAR */}
-        <header className="fixed top-0 z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">
-          <div className="flex items-center gap-3">
+<header className="fixed top-0 left-0 right-0 md:left-[260px] z-30 flex h-14 shrink-0 items-center justify-between bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-6 lg:px-8 border-b border-[#deded4]/40">          <div className="flex items-center gap-3">
             <button className="rounded-md p-1.5 transition-colors hover:bg-black/5 xl:hidden" onClick={() => setMobileNavOpen(true)}>
               <Menu size={20} />
             </button>

@@ -34,40 +34,44 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/farmer/dashboard" element={<ProtectedRoute><FarmerDashboard /></ProtectedRoute>} />
         
-        <Route path="/farmer/lands" element={<ProtectedRoute><LandListPage /></ProtectedRoute>} />
-        
-        <Route path="/farmer/lands/new" element={<ProtectedRoute><AddLandPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/new/location" element={<ProtectedRoute><LocationMapPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/new/details" element={<ProtectedRoute><CropContextPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId" element={<ProtectedRoute><LandDetailPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/review" element={<ProtectedRoute><LandReviewPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/irrigation" element={<ProtectedRoute><IrrigationPulsePage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/condition" element={<ProtectedRoute><ConditionWaterPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/summary" element={<ProtectedRoute><ConditionSummaryPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/action-alternatives" element={<ProtectedRoute><ActionAlternativesPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/optional-review" element={<ProtectedRoute><OptionalReviewPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/select-reviewer" element={<ProtectedRoute><SelectReviewerPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/final-decision" element={<ProtectedRoute><FinalDecisionPage /></ProtectedRoute>} />
-        
-        <Route path="/farmer/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        
-        <Route path="/farmer/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-        <Route path="/farmer/history/:historyId" element={<ProtectedRoute><HistoryDetailPage /></ProtectedRoute>} />
-
-        <Route path="/reviewer/dashboard" element={<ProtectedRoute><DashboardReviewerPage /></ProtectedRoute>} />
-        <Route path="/reviewer/review" element={<ProtectedRoute><ReviewListPage /></ProtectedRoute>} />
-        <Route path="/reviewer/review/:reviewId" element={<ProtectedRoute><ReviewDetailPage /></ProtectedRoute>} />
-        <Route path="/reviewer/history" element={<ProtectedRoute><HistoryReviewPage /></ProtectedRoute>} />
-        <Route path="/reviewer/profile" element={<ProtectedRoute><ReviewerProfilePage /></ProtectedRoute>} />
-        
+        {/* === RUTE PUBLIK (AUTENTIKASI) === */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* === RUTE KHUSUS PETANI (FARMER) === */}
+        <Route path="/farmer/dashboard" element={<ProtectedRoute allowedRole="farmer"><FarmerDashboard /></ProtectedRoute>} />
         
-        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/farmer/lands" element={<ProtectedRoute allowedRole="farmer"><LandListPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new" element={<ProtectedRoute allowedRole="farmer"><AddLandPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new/location" element={<ProtectedRoute allowedRole="farmer"><LocationMapPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/new/details" element={<ProtectedRoute allowedRole="farmer"><CropContextPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId" element={<ProtectedRoute allowedRole="farmer"><LandDetailPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/review" element={<ProtectedRoute allowedRole="farmer"><LandReviewPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/irrigation" element={<ProtectedRoute allowedRole="farmer"><IrrigationPulsePage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/condition" element={<ProtectedRoute allowedRole="farmer"><ConditionWaterPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/summary" element={<ProtectedRoute allowedRole="farmer"><ConditionSummaryPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/action-alternatives" element={<ProtectedRoute allowedRole="farmer"><ActionAlternativesPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/optional-review" element={<ProtectedRoute allowedRole="farmer"><OptionalReviewPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/select-reviewer" element={<ProtectedRoute allowedRole="farmer"><SelectReviewerPage /></ProtectedRoute>} />
+        <Route path="/farmer/lands/:landId/final-decision" element={<ProtectedRoute allowedRole="farmer"><FinalDecisionPage /></ProtectedRoute>} />
+        
+        <Route path="/farmer/profile" element={<ProtectedRoute allowedRole="farmer"><ProfilePage /></ProtectedRoute>} />
+        
+        <Route path="/farmer/history" element={<ProtectedRoute allowedRole="farmer"><HistoryPage /></ProtectedRoute>} />
+        <Route path="/farmer/history/:historyId" element={<ProtectedRoute allowedRole="farmer"><HistoryDetailPage /></ProtectedRoute>} />
+
+        {/* === RUTE KHUSUS REVIEWER === */}
+        <Route path="/reviewer/dashboard" element={<ProtectedRoute allowedRole="reviewer"><DashboardReviewerPage /></ProtectedRoute>} />
+        <Route path="/reviewer/review" element={<ProtectedRoute allowedRole="reviewer"><ReviewListPage /></ProtectedRoute>} />
+        <Route path="/reviewer/review/:reviewId" element={<ProtectedRoute allowedRole="reviewer"><ReviewDetailPage /></ProtectedRoute>} />
+        <Route path="/reviewer/history" element={<ProtectedRoute allowedRole="reviewer"><HistoryReviewPage /></ProtectedRoute>} />
+        <Route path="/reviewer/profile" element={<ProtectedRoute allowedRole="reviewer"><ReviewerProfilePage /></ProtectedRoute>} />
+        
+        {/* Rute Default / Fallback */}
+        <Route path="/home" element={<ProtectedRoute allowedRole="farmer"><HomePage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

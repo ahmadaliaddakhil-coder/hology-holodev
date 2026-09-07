@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ArrowLeft, ArrowRight, Bell, CloudSun, Leaf, Menu, 
-  Settings, Sprout, UserCircle2, Warehouse, History, 
+  Sprout, UserCircle2, Warehouse, History,
   ClipboardCheck, AlertTriangle, Check, X,
   MapPin, Droplets, Info, FileText, Circle, CheckCircle2,
   Send
@@ -9,6 +9,7 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { reviewerApi, type ApiReviewerReviewDetail } from "../../lib/reviewer-api";
 import { getUser } from "../../lib/auth";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -191,7 +192,7 @@ export function ReviewDetailPage() {
                 <p className="text-[10px] text-[#666a60]">Reviewer</p>
               </div>
             </div>
-            <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
+            <LogoutButton compact />
           </div>
         </div>
       </aside>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Bell, CloudSun, Leaf, Menu, 
-  Settings, UserCircle2, Warehouse, History,
+  UserCircle2, Warehouse, History,
   ClipboardCheck, X, MapPin, ShieldCheck, User, 
   FileText, HelpCircle, Edit2, Check, Lock
 } from "lucide-react";
@@ -92,7 +92,7 @@ export function ReviewerProfilePage() {
                 <p className="text-[10px] text-[#666a60]">Reviewer</p>
               </div>
             </div>
-            <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
+            <LogoutButton compact />
           </div>
         </div>
       </aside>

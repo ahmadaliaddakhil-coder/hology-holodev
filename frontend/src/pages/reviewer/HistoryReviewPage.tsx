@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import {
     Bell, CloudSun, Leaf, Menu,
-    Settings, UserCircle2, Warehouse, History,
+    UserCircle2, Warehouse, History,
     ClipboardCheck, Check, X,
     Layers, ChevronDown, ChevronUp, ShieldCheck, CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { reviewerApi, type ApiReviewerDashboard } from "../../lib/reviewer-api";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 // Komponen Navigasi Sidebar (Standar)
 function NavItem({ icon: Icon, label, active = false }: { icon: typeof Warehouse; label: string; active?: boolean }) {
@@ -106,7 +107,7 @@ export function HistoryReviewPage() {
                                 <p className="text-[10px] text-[#666a60]">Reviewer</p>
                             </div>
                         </div>
-                        <Settings size={16} className="text-[#666a60] cursor-pointer hover:text-[#15240a]" />
+                        <LogoutButton compact />
                     </div>
                 </div>
             </aside>

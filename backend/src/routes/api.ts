@@ -240,7 +240,8 @@ export function createApiRouter(
       const reviewerId = currentProfileId(request);
       const pendingCases = await repositories.decisionCases.getAll({ status: 'review_pending' });
       const pendingContexts = await Promise.all(pendingCases.map((item) => repositories.decisionCases.getWithContext(item.id)));
-      const completedReviews = await repositories.trustedReviews.getByReviewer(reviewerId);
+      const completedReviews = (await repositories.trustedReviews.getByReviewer(reviewerId))
+        .sort((left, right) => new Date(right.responded_at ?? right.created_at).getTime() - new Date(left.responded_at ?? left.created_at).getTime());
       const completedContexts = await Promise.all(completedReviews.map((item) => repositories.decisionCases.getWithContext(item.decision_case_id)));
 
       const pending = pendingContexts.filter((context: any) => {
@@ -296,8 +297,8 @@ export function createApiRouter(
       response.json({
         stats: { pending_count: pending.length, urgent_count: pending.filter((item) => item.evidence.field_pulse?.condition === 'none').length },
         reviewer_name: request.auth?.profile.display_name ?? 'Reviewer',
-        region: pending[0]?.location ?? 'Belum ada wilayah',
-        weather: pending[0]?.evidence.bmkg ?? null,
+        region: pending[0]?.location ?? reviewerLocation((completedContexts[0] as any)?.land),
+        weather: pending[0]?.evidence.bmkg ?? reviewerForecast(completedContexts[0] as any),
         pending_reviews: pending,
         completed_reviews: completed,
       });

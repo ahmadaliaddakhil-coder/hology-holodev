@@ -28,7 +28,8 @@ export function SelectReviewerPage() {
     Promise.all([ensureAssessment(landId), farmerApi.listReviewers()])
       .then(async ([nextData, nextReviewers]) => {
         setData(nextData);
-        setReviewers(nextReviewers.filter((reviewer, index, all) => all.findIndex((candidate) => candidate.display_name.trim().toLocaleLowerCase("id-ID") === reviewer.display_name.trim().toLocaleLowerCase("id-ID") && candidate.role === reviewer.role) === index));
+        const newestFirst = [...nextReviewers].sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime());
+        setReviewers(newestFirst.filter((reviewer, index, all) => all.findIndex((candidate) => candidate.display_name.trim().toLocaleLowerCase("id-ID") === reviewer.display_name.trim().toLocaleLowerCase("id-ID") && candidate.role === reviewer.role) === index));
         setReviews(await farmerApi.listReviews(nextData.decisionCase.id));
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Daftar pendamping gagal dimuat"));

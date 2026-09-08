@@ -1191,10 +1191,15 @@ export function createApiRouter(
         return;
       }
       const assessment = await repositories.assessments.getById(decisionRecord.assessment_id);
+      const trustedReviews = await Promise.all((await repositories.trustedReviews.getByDecisionCaseId(decisionRecord.decision_case_id)).map(async (review) => ({
+        reviewerName: (await repositories.profiles.getById(review.reviewer_id))?.display_name,
+        status: review.status,
+        comment: review.comment,
+      })));
       const input: CreateDecisionBriefInput = {
         decision_record_id: decisionRecordId,
         template_version: 'decision-brief-v0.2',
-        content: formatDecisionBrief({ decisionCase, decisionRecord, assessment }),
+        content: formatDecisionBrief({ decisionCase, decisionRecord, assessment, trustedReviews }),
       };
       response.status(201).json(await repositories.decisionBriefs.createBrief(input));
     } catch (error) {
@@ -1217,7 +1222,12 @@ export function createApiRouter(
         return;
       }
       const assessment = await repositories.assessments.getById(decisionRecord.assessment_id);
-      response.json({ text: formatDecisionBrief({ decisionCase, decisionRecord, assessment }) });
+      const trustedReviews = await Promise.all((await repositories.trustedReviews.getByDecisionCaseId(decisionRecord.decision_case_id)).map(async (review) => ({
+        reviewerName: (await repositories.profiles.getById(review.reviewer_id))?.display_name,
+        status: review.status,
+        comment: review.comment,
+      })));
+      response.json({ text: formatDecisionBrief({ decisionCase, decisionRecord, assessment, trustedReviews }) });
     } catch (error) {
       sendError(response, error);
     }

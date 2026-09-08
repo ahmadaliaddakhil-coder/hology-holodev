@@ -4,6 +4,7 @@ import { assertProfileAccess, currentProfileId } from '../shared/auth.js';
 import { BmkgAdapter } from '../infrastructure/bmkg/bmkg-adapter.js';
 import { BigBoundaryClient } from '../infrastructure/location/big-boundary-client.js';
 import { BmkgAdm4Verifier } from '../infrastructure/location/bmkg-adm4-verifier.js';
+import { findCanonicalAdm4 } from '../infrastructure/location/canonical-adm4-map.js';
 
 import { WaterReasoningEngine } from '../infrastructure/reasoning/water-reasoning-engine.js';
 import { LlmReasoningEnhancer } from '../infrastructure/reasoning/llm-reasoning-enhancer.js';
@@ -694,8 +695,26 @@ export function createApiRouter(
       const body = bodyOf(request);
       const lat = requiredNumber(body.lat, 'lat');
       const lon = requiredNumber(body.lon, 'lon');
-      const boundaryCandidate = await boundaryClient.findContainingPoint({ lat, lon });
       const requestedAdm4 = typeof body.adm4 === 'string' && body.adm4.trim() ? body.adm4.trim() : undefined;
+      let boundaryCandidate;
+      try {
+        boundaryCandidate = await boundaryClient.findContainingPoint({ lat, lon });
+      } catch (error) {
+        const canonicalAdm4 = requestedAdm4 ?? findCanonicalAdm4({ lat, lon });
+        if (!canonicalAdm4) throw error;
+        const verified = await adm4Verifier.verify(canonicalAdm4);
+        boundaryCandidate = {
+          lat,
+          lon,
+          provider: 'bmkg-canonical-fallback',
+          attributes: verified.location,
+          province: typeof verified.location.provinsi === 'string' ? verified.location.provinsi : undefined,
+          regency: typeof verified.location.kotkab === 'string' ? verified.location.kotkab : undefined,
+          district: typeof verified.location.kecamatan === 'string' ? verified.location.kecamatan : undefined,
+          village: typeof verified.location.desa === 'string' ? verified.location.desa : undefined,
+          adm4Candidate: canonicalAdm4,
+        };
+      }
       const candidateAdm4 = boundaryCandidate.adm4Candidate;
       const adm4 = requestedAdm4 ?? (candidateAdm4 && /^\d{2}\.\d{2}\.\d{2}\.\d{4}$/.test(candidateAdm4) ? candidateAdm4 : undefined);
       const adm4Verification = adm4 ? await adm4Verifier.verify(adm4) : null;

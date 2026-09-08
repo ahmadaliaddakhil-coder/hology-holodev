@@ -1,11 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowRight, Bell, Check, ChevronRight, History, Leaf, Menu, Settings, Sprout, UserCircle2, Users, Warehouse, X } from "lucide-react";
+import { ArrowRight, Bell, Check, ChevronRight, History, Leaf, Menu, Sprout, UserCircle2, Users, Warehouse, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ErrorCard, LoadingCard } from "../../components/farmer/WorkflowLayout";
 import { ensureAssessment, readWorkflow, saveWorkflow, type WorkflowData } from "../../lib/decision-workflow";
 import { farmerApi, type ApiReviewerProfile, type ApiTrustedReview } from "../../services/farmer-api";
 import { getUser } from "../../lib/auth";
 import { WeatherStatus } from "../../components/farmer/WeatherStatus";
+import { LogoutButton } from "../../components/auth/LogoutButton";
 
 export function SelectReviewerPage() {
   const { landId = "" } = useParams();
@@ -27,7 +28,7 @@ export function SelectReviewerPage() {
     Promise.all([ensureAssessment(landId), farmerApi.listReviewers()])
       .then(async ([nextData, nextReviewers]) => {
         setData(nextData);
-        setReviewers(nextReviewers);
+        setReviewers(nextReviewers.filter((reviewer, index, all) => all.findIndex((candidate) => candidate.display_name.trim().toLocaleLowerCase("id-ID") === reviewer.display_name.trim().toLocaleLowerCase("id-ID") && candidate.role === reviewer.role) === index));
         setReviews(await farmerApi.listReviews(nextData.decisionCase.id));
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : "Daftar pendamping gagal dimuat"));
@@ -70,7 +71,7 @@ export function SelectReviewerPage() {
     {mobileNavOpen && <button type="button" className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu" />}
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col justify-between bg-[#fafaf6] p-5 shadow-sm transition-transform duration-300 ${mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
       <div><div className="mb-7 flex items-center justify-between px-2"><Link to="/farmer/dashboard" className="flex items-center gap-2 rounded-xl bg-[#15240a]/80 px-3 py-2 text-[10px] font-bold tracking-[0.16em] text-white"><Leaf size={15} className="text-[#85c254]" />REMBUKTANI</Link><button type="button" className="md:hidden" onClick={() => setMobileNavOpen(false)} aria-label="Tutup menu"><X size={20} /></button></div><Link to="/farmer/lands/new" className="mb-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#85c254] px-4 py-3 text-sm font-semibold">+ Tambah Lahan</Link><nav className="space-y-1"><SideLink to="/farmer/dashboard" icon={<Warehouse size={18} />} label="Beranda" /><SideLink to="/farmer/lands" icon={<Sprout size={18} />} label="Lahan" active /><SideLink to="/farmer/history" icon={<History size={18} />} label="Riwayat" /><SideLink to="/farmer/profile" icon={<UserCircle2 size={18} />} label="Profil" /></nav></div>
-      <div className="space-y-4"><div className="rounded-xl bg-[#e9fcb5] p-3"><p className="text-xs font-bold"><span className="mr-1.5 inline-block size-2 rounded-full bg-[#85c254]" />Sinkronisasi BMKG</p><div className="pl-4 text-[10px] text-[#56652e]"><WeatherStatus preferredLandId={landId} /></div></div><div className="flex items-center justify-between px-1"><div className="flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></span><div><p className="text-xs font-bold">{user?.display_name || user?.displayName || "Sahabat Tani"}</p><p className="text-[10px] text-[#666a60]">Petani</p></div></div><Settings size={15} className="text-[#666a60]" /></div></div>
+      <div className="space-y-4"><div className="rounded-xl bg-[#e9fcb5] p-3"><p className="text-xs font-bold"><span className="mr-1.5 inline-block size-2 rounded-full bg-[#85c254]" />Sinkronisasi BMKG</p><div className="pl-4 text-[10px] text-[#56652e]"><WeatherStatus preferredLandId={landId} /></div></div><div className="flex items-center justify-between px-1"><div className="flex items-center gap-2"><span className="flex size-8 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={15} /></span><div><p className="text-xs font-bold">{user?.display_name || user?.displayName || "Sahabat Tani"}</p><p className="text-[10px] text-[#666a60]">Petani</p></div></div><LogoutButton compact /></div></div>
     </aside>
 
     <div className="md:ml-[260px]"><header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-[#deded4]/50 bg-[#f3f3ec]/90 px-4 backdrop-blur-md sm:px-8"><button type="button" className="rounded-md p-1.5 md:hidden" onClick={() => setMobileNavOpen(true)} aria-label="Buka menu"><Menu size={20} /></button><span className="truncate rounded bg-[#e9fcb5] px-2.5 py-1 text-[10px] font-bold text-[#213014] sm:text-xs">Wilayah: {location}</span><div className="flex items-center gap-4"><span className="hidden items-center gap-1.5 text-xs font-medium sm:flex"><WeatherStatus preferredLandId={landId} /></span><Bell size={17} /><span className="flex size-7 items-center justify-center rounded-full bg-[#0d1b03] text-white"><UserCircle2 size={14} /></span></div></header>

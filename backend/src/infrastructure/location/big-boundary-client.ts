@@ -47,11 +47,11 @@ export class BigBoundaryClient {
 
     let response: Response | undefined;
     let lastError: unknown;
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
+    for (let attempt = 1; attempt <= 1; attempt += 1) {
       try {
         response = await this.fetcher(`${this.endpoint}?${params}`, {
           headers: { accept: 'application/json' },
-          signal: AbortSignal.timeout(25_000),
+          signal: AbortSignal.timeout(8_000),
         });
         if (response.ok) break;
         lastError = new Error(`HTTP ${response.status}`);

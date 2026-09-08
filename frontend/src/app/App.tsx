@@ -29,7 +29,6 @@ import { ReviewListPage } from "../pages/reviewer/ReviewListPage";
 import { ReviewDetailPage } from "../pages/reviewer/ReviewDetailPage";
 import { HistoryReviewPage } from "../pages/reviewer/HistoryReviewPage";
 import { ReviewerProfilePage } from "../pages/reviewer/ReviewerProfilePage";
-import { ResultDecisionPage } from "../pages/farmer/ResultDecisionPage";
 
 function App() {
   return (
@@ -60,7 +59,6 @@ function App() {
         <Route path="/farmer/lands/:landId/optional-review" element={<ProtectedRoute allowedRole="farmer"><OptionalReviewPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId/select-reviewer" element={<ProtectedRoute allowedRole="farmer"><SelectReviewerPage /></ProtectedRoute>} />
         <Route path="/farmer/lands/:landId/final-decision" element={<ProtectedRoute allowedRole="farmer"><FinalDecisionPage /></ProtectedRoute>} />
-        <Route path="/farmer/lands/:landId/result-decision" element={<ProtectedRoute allowedRole="farmer"><ResultDecisionPage /></ProtectedRoute>} />
         
         <Route path="/farmer/profile" element={<ProtectedRoute allowedRole="farmer"><ProfilePage /></ProtectedRoute>} />
         

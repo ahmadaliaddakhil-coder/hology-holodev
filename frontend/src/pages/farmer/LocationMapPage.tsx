@@ -86,7 +86,7 @@ export function LocationMapPage() {
     }
     if (!resolvedBoundary) return;
     const validAdm4 = resolvedBoundary.adm4Candidate && /^\d{2}\.\d{2}\.\d{2}\.\d{4}$/.test(resolvedBoundary.adm4Candidate) ? resolvedBoundary.adm4Candidate : undefined;
-    updateLandDraft({ latitude: center[0], longitude: center[1], boundaryPolygon: polygon.length >= 3 ? polygon : undefined, adm4Code: validAdm4, locationSource: "big_boundary_candidate", locationResolved: true, province: resolvedBoundary.province, regency: resolvedBoundary.regency, district: resolvedBoundary.district, village: resolvedBoundary.village });
+    updateLandDraft({ latitude: center[0], longitude: center[1], boundaryPolygon: polygon.length >= 3 ? polygon : undefined, adm4Code: validAdm4, locationSource: "canonical_boundary_resolution", locationResolved: true, province: resolvedBoundary.province, regency: resolvedBoundary.regency, district: resolvedBoundary.district, village: resolvedBoundary.village });
     navigate("/farmer/lands/new/details");
   };
 
